@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Solar Cell & Import grid</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <style>
+        /* --- Global, Sidebar, Main Content Styles (เหมือนเดิม) --- */
+        * { margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Segoe UI', Tahoma, 
+            Geneva, Verdana, sans-serif; 
+        }
+        body { background-color: #1e2433; color: white; display: flex; }
+        .container { display: flex; min-height: 100vh; width: 100%; }
+        .sidebar { width: 200px; min-width: 200px; background-color: #1e2433; border-right: 1px solid #2d3445; display: flex; flex-direction: column; height: 100vh; position: fixed; top: 0; left: 0; overflow-y: auto; z-index: 10; }
+        .sidebar .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: #1e2433; border-bottom: 1px solid #2d3445; flex-shrink: 0; }
+        .sidebar .logo { height: 30px; vertical-align: middle; }
+        .sidebar .time { font-size: 18px; color: white; }
+        .nav-menu { padding: 10px 0; flex-grow: 1; }
+        .nav-item { padding: 12px 20px; cursor: pointer; font-size: 14px; transition: background-color 0.3s; position: relative; display: block; text-decoration: none; color: white; }
+        .nav-item.active, .nav-item:hover { background-color: #2d3445; }
+        .nav-item a { text-decoration: none; color: inherit; display: block; }
+        .sub-menu { padding-left: 20px; display: none; background-color: #1e2433; }
+        .sub-menu.active-menu { display: block !important; }
+        .sub-item { padding: 10px 20px; font-size: 13px; cursor: pointer; background-color: #1e2433; display: block; text-decoration: none; color: white; transition: background-color 0.3s; }
+        .sub-item:hover { background-color: #3c4357; color: white; }
+        .sub-item.active { background-color: #34495e; color: white; font-weight: bold; }
+        .sub-sub-menu { padding-left: 20px; background-color: rgba(45, 52, 69, 0.5); }
+        .sub-sub-menu.active-menu { display: block !important; background-color: #1e2433; }
+        .dropdown-icon { float: right; margin-left: 5px; transition: transform 0.3s; font-size: 0.8em; }
+        .nav-item.active-parent > .dropdown-icon, .sub-item.active-parent > .dropdown-icon { transform: rotate(180deg); }
+        .main-content { margin-left: 200px; flex-grow: 1; background-color: #2d3445; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
+        .main-content .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: #1e2433; border-bottom: 1px solid #2d3445; flex-shrink: 0; flex-wrap: wrap; gap: 10px; /* Added gap */ }
+        .search-bar { flex-grow: 1; margin: 0 10px 0 0; /* Adjusted margin */ min-width: 150px; }
+        .search-input { width: 100%; max-width: 300px; padding: 8px 15px 8px 40px; border-radius: 25px; border: none; background-color: #2d3445; color: white; background-image: url('...'); background-repeat: no-repeat; background-position: 15px center; outline: none; }
+        .tools { display: flex; align-items: center; gap: 15px; color: #bdc3c7; flex-wrap: wrap; }
+        .tool-icon{ cursor: pointer; }
+        .tool-icon:hover{ color: white; }
+
+        /* --- Styles for Time Range Selection Area --- */
+        .time-selection-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: #2d3445;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .time-range-selector select,
+        .time-selection-area input[type="text"],
+        .time-selection-area button {
+            background-color: #1e2433; /* Darker background */
+            color: white;
+            border: 1px solid #3c4357; /* Slightly lighter border */
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .time-range-selector select {
+            -webkit-appearance: none; -moz-appearance: none; appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg fill="white" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 30px;
+        }
+
+        /* Style for flatpickr inputs */
+        .time-selection-area input.flatpickr-input {
+            width: 150px; /* Adjust width as needed */
+             cursor: pointer;
+        }
+        /* Style for Apply button */
+        .time-selection-area button {
+            background-color: #3498db; /* Example blue color */
+            border-color: #2980b9;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .time-selection-area button:hover {
+            background-color: #2980b9;
+        }
+
+        .language-selector { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+        .flag { width: 24px; height: 16px; display: inline-block; vertical-align: middle; }
+
+        /* --- Dashboard Content Area (เหมือนเดิม) --- */
+        .content-wrapper { padding: 20px; flex-grow: 1; overflow-y: auto; }
+        /* Info Cards, Chart Sections, etc. (เหมือนเดิม) */
+        .info-cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .info-card { background-color: #1e2433; padding: 15px; border-radius: 8px; border: 1px solid #2d3445; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .info-card h3 { font-size: 0.9em; color: #bdc3c7; margin-bottom: 8px; font-weight: normal; }
+        .info-card .value { font-size: 1.6em; font-weight: bold; color: white; margin-bottom: 5px; }
+        .info-card .unit { font-size: 0.9em; color: #bdc3c7; margin-left: 5px; }
+        .chart-section { background-color: #1e2433; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #2d3445; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .chart-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; flex-wrap: wrap; gap: 15px; }
+        .chart-title { font-size: 1.5em; font-weight: bold; color: #ffffff; margin: 0; flex-grow: 1; }
+        .chart-summary { display: flex; gap: 15px; flex-wrap: wrap; }
+        .summary-box { background-color: #2d3445; padding: 10px 15px; border-radius: 5px; text-align: center; min-width: 120px; }
+        .summary-box .label { font-size: 0.8em; color: #bdc3c7; margin-bottom: 5px; display: block; }
+        .summary-box .value { font-size: 1.2em; font-weight: bold; color: white; }
+        .summary-box .unit { font-size: 0.8em; color: #bdc3c7; margin-left: 3px; }
+        .chart-container { position: relative; height: 280px; width: 100%; background-color: #2d3445; border-radius: 5px; padding: 10px; }
+
+        /* Responsive Adjustments (เหมือนเดิม) */
+        @media (max-width: 1200px) { /* Adjust breakpoint if needed */
+             .time-selection-area {
+                 flex-wrap: wrap;
+             }
+             .time-selection-area input.flatpickr-input {
+                 width: calc(50% - 5px); /* Two inputs side-by-side */
+                 min-width: 140px;
+             }
+             .time-selection-area button {
+                 width: 100%;
+                 margin-top: 5px;
+             }
+        }
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { position: static; width: 100%; height: auto; border-right: none; border-bottom: 1px solid #2d3445; }
+            .main-content { margin-left: 0; }
+            .main-content .header { justify-content: space-between; gap: 5px; }
+            .search-bar { margin: 0 0 10px 0; width: 100%; max-width: none; }
+            .tools { justify-content: space-between; gap: 10px; width: 100%; } /* Adjust tools layout */
+            .time-selection-area { width: 100%; justify-content: center; }
+             .time-selection-area input.flatpickr-input { width: calc(50% - 10px); }
+             .time-selection-area button { width: auto; margin-top: 0; }
+
+            .content-wrapper { padding: 10px; }
+            .chart-header { flex-direction: column; align-items: stretch; }
+            .chart-summary { justify-content: space-around; }
+            .chart-container { height: 200px; }
+        }
+        .aaaa1 { padding: 0; position: relative; color: #ffffff; cursor: pointer; font-size: inherit; transition: background-color 0.3s; text-decoration: none; display: block; }
+
+        #bbbb1{
+            background-color: #2980b9;
+            position: relative;
+            width: 200px;
+            height: 100px;
+            top:190px;
+            left: 215px;
+            background-color: #2d3445;
+            padding: 25px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        #bbbb2{
+            background-color: #2980b9;
+            position: relative;
+            width: 200px;
+            height: 100px;
+            top:190px;
+            left: 215px;
+
+            background-color: #2d3445;
+            padding: 25px;
+            border-radius: 6px;
+            text-align: left;
+        }
+
+        #bbbb3{
+            background-color: #2980b9;
+            position: relative;
+            width: 200px;
+            height: 100px;
+            top:75px;
+            background-color: #2d3445;
+            padding: 25px;
+            border-radius: 6px;
+            text-align: left;
+        }
+        #cccc{
+            position: relative;
+            top: 20px;
+            
+        }
+
+        .zzzz{
+            position: relative;
+            top: 38px;
+            right: 63px;
+        }
+        .mmmm{
+            position: relative;
+            top: 15px;
+           
+        }
+
+        .ahu{
+            position: relative;
+            bottom: 10px;
+            background-color: #ffffff;
+            border-radius: 5px;
+        }
+        .ahu01{
+            text-align: center;
+            color: #3702c7;
+        }
+
+        .chart-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #3702c7;
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .chart-title1 {
+            position: relative;
+            right: 9%;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4fbb61;
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .chart-title2 {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ba34d2;
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .chart-title3 {
+            position: relative;
+            right: 19%;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4fbb61;
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .chart-title4 {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ba34d2;
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .chart-title5 {
+            position: relative;
+            right: 20%;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4fbb61;
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .chart-title6 {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ba34d2;
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .chart-title7 {
+            position: relative;
+            right: 22%;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4fbb61;
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .chart-title8 {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ba34d2;
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .chart-title9 {
+            position: relative;
+            right: 18%;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4fbb61;
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .chart-titleee{
+            position: relative;
+            /* right: 18%; */
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ba34d2;
+            margin: 0;
+            flex-grow: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+             <div class="header">
+                 <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAMESURBVHhe7ZxNbtswDIVPhK+eIukJmk4QOkHZCboOAnWCujdJOkncDugkVSeoM7Ahu4I/fYKASJEsy9t9EAh/NEBCiH98HgxGRAghxG8RxhgZY5w7fwdmPu3kMg/QNC0tLCzsQcQ81J9QRh2X02B/lx84t6m7p5aTnMz7S/dP77sMSt4nAo1Gw5dL909DkqSgXC6v7c9X44p73W73uGmaZs7K5fLCzWYzy0AgEGC5XL58Pq/nJ0uSyuVylmVZHv0zQghHjPERapqm87PZbAII8nypVIoY4wOBwIEQQtg1bY9pmo/U6XTs9fS877k8nFvKqhhja+MGxhgnIYTJsiwpy5L8sS5Lctb1fTTGCMHAzQ3m3hLjXAMjRkdp63neGGMul0vYd+vX5vOR373F+UqgVCpRhCAI8zBGIpEYhBBCkGU5jDGxLMtpmmZGfWGMcaPRqIQQ/B+MMRzHQQjyPBRFPBHFEEXxRywW6/5hHCKEcBwOsVKpZDab/V3Lsuj5+fOAr5a+8Dyf7Xa7Xq9n//3xYDCwzWbDx3/f849wONzxPS+VSm3z+YypVKrd4zh++4/iE6TZbP7bKpWK9/2q55g3qG/cK88c80Z8PkvjE+SWL5dL2BjjpFBK9/c0TbP/q4bxeDyVSgW+hBBm75yFLMumOI73+/0SCAQEQRAAUBQFURTz+XxeLBZfLpdzPB6PxeLhy4mJyVgslsfj8X+PbhAECIRQz/MYY5IkAaDIaDQqCIIYDAaUUkop3vt+v99dnmf+a5rWbDaT7fQ2h7Y7hBBxHL+aB+8NkqT3+z28v/d19X/f923nuz+VSq2/t9+0fL//7R/N/3L4zJmfn5+e/fF+v//T19+u76dSynk8HpRSUsq7ffvMhQsX/v89Hn//w4cPz+fzF6599/1p+5t62Gg0/P79++eff/6870+sP/76T7/wYDB41/V9KpHIWywW8/sB/CslJSX/D+j7R0qj4/C3AAAAAElFTkSuQmCC" alt="RST Logo" class="logo">
+                 <!-- <div class="time">06:15 PM</div> -->
+            </div>
+            <div class="nav-menu">
+                 <div class="nav-item">Dashboard</div>
+                 <div class="nav-item"><a href="{{ url_for('home') }}">Event</a></div>
+                 <div class="nav-item">Overview</div>
+                 <div class="nav-item "><a href="{{ url_for('device_control') }}" class="aaaa1">Device Control</a></div> 
+                 <div class="nav-item " onclick="toggleMenu('report-menu')">
+                    Report <span class="dropdown-icon">▼</span>
+                </div>
+
+                 <div class="sub-menu " id="report-menu">
+                    <!-- <div class="sub-item" onclick="toggleMenu('mdb-menu')">
+                         MDB <span class="dropdown-icon">▼</span>
+                     </div> -->
+                     <!-- <div class="sub-menu sub-sub-menu" id="mdb-menu"> -->
+                        <div class="sub-item"><a href="MDB.html" class="aaaa1">Solar & import</a></div>
+                    <!-- </div> -->
+                      <!-- <div class="sub-item"><a href="AC and Other.html" class="aaaa1">A/C & Other</a></div> -->
+                      <div class="sub-item" ><a href="{{ url_for('air_condition') }}" class="aaaa1">Air condition </a></div>
+                      <div class="sub-item"><a href=" " class="aaaa1">Power meter </a></div>
+                      <div class="sub-item"><a href="{{ url_for('iaq') }}" class="aaaa1">IAQ Sensor</a></div>
+                      <div class="sub-item"><a href="{{ url_for('people_counting') }}" class="aaaa1">Camera</a></div>
+                  </div>
+                 <div class="nav-item">Settings</div>
+                 <div class="nav-item">Logout</div>
+             </div>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                 <div class="search-bar">
+                     <input type="text" class="search-input" placeholder="Search">
+                 </div>
+                 <div class="tools">
+                     <div class="time-selection-area">
+                         <div class="time-range-selector">
+                             <select id="timeRangeSelect">
+                                 <option value="custom">Custom Range</option> <option value="5m">Last 5 minutes</option>
+                                 <option value="15m">Last 15 minutes</option>
+                                 <option value="30m">Last 30 minutes</option>
+                                 <option value="1h">Last 1 hour</option>
+                                 <option value="3h">Last 3 hours</option>
+                                 <option value="6h" selected>Last 6 hours</option>
+                                 <option value="12h">Last 12 hours</option>
+                                 <option value="24h">Last 24 hours</option>
+                                 <option value="2d">Last 2 days</option>
+                                 </select>
+                         </div>
+                         <input type="text" id="startTimeInput" placeholder="From Date/Time">
+                         <input type="text" id="endTimeInput" placeholder="To Date/Time">
+                         <button id="applyTimeRange">Apply</button>
+                     </div>
+                     <!-- <div class="tool-icon">🔍</div> <div class="tool-icon">🔄</div> <div class="tool-icon">✓</div> <div class="tool-icon">^</div>
+                     <div class="language-selector"> <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAPCAMAAADJmq04AAAAQlBMVEUAVIcAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4fm09gPAAAAFXRSTlMAYGFfQJ+fr79/P39/v0CAv59/f6A+f5iWAAAAR0lEQVR42pWOWQ6AMAgDXeLu/4v3tBWHJO/+N+gYEEBqKj7+C1HkRJHlsbq/N6+g5LIGW9Kz9LpD6SU4qLh1z5k+wAMmQgJLv56KygAAAABJRU5ErkJggg==" alt="UK Flag" class="flag"> <span>English</span> <span>▼</span> </div> -->
+                 </div>
+             </div>
+
+             <div class="content-wrapper">
+                 <div class="chart-section" id="kwh-chart">
+                     <div class="chart-header">
+                         <h2 class="chart-title">Total Energy (kWh)</h2>
+                         <div class="chart-summary"> </div>
+                     </div>
+                     <div class="chart-container"><canvas id="kwhChartCanvas"></canvas></div>
+                 </div>
+                 <div class="chart-section" id="kw-chart">
+                     <div class="chart-header">
+                         <h2 class="chart-title">Total Power (kW)</h2>
+                          <div class="chart-summary"> </div>
+                     </div>
+                      <div class="chart-container"><canvas id="kwChartCanvas"></canvas></div>
+                 </div>
+                 <div class="chart-section" id="a-chart">
+                     <div class="chart-header">
+                         <h2 class="chart-title">Total Current (A)</h2>
+                          <div class="chart-summary"> </div>
+                     </div>
+                      <div class="chart-container"><canvas id="aChartCanvas"></canvas></div>
+                 </div>
+                 <div class="chart-section" id="v-chart">
+                     <div class="chart-header">
+                         <h2 class="chart-title">Average Voltage (V)</h2>
+                         <div class="chart-summary"> </div>
+                     </div>
+                     <div class="chart-container"><canvas id="vChartCanvas"></canvas></div>
+                 </div>
+                  <div class="chart-section" id="pf-chart">
+                     <div class="chart-header">
+                         <h2 class="chart-title">Average Power Factor PF</h2>
+                         <div class="chart-summary"> </div>
+                     </div>
+                      <div class="chart-container"><canvas id="pfChartCanvas"></canvas></div>
+                 </div>
+                
+
+<!-- ------------------------------------------------------------------------------------------------------------------------------------------------------------- -->
+            <div class="acandother">   
+                <div class="chart-section" id="kwh-chart">
+                    <div class="chart-header">
+                        <h1 class="chart-titleee"> A/C & </h1>
+                        <h1 class="chart-title1"> Other (Energy) kWh</h1>
+                        <div class="chart-summary">
+                            <div class="summary-box"> <span class="label">Solar Cell</span> <span class="value">last : 400<span class="unit">kWh</span></span> </div>
+                            <div class="summary-box"> <span class="label">Import grid</span> <span class="value">last : 500<span class="unit">kWh</span></span> </div>
+                            <div class="summary-box"> <span class="label">Total Energy Consumption</span> <span class="value">last : 900<span class="unit">kWh</span></span> </div>
+                            <div class="summary-box"> <span class="label">Total Energy Consumption</span> <span class="value">Today : 3,000<span class="unit">kWh</span></span> </div>
+                        </div>
+                    </div>
+                    <div class="chart-container"><canvas id="ac_kwhChartCanvas"></canvas></div>
+                </div>
+
+                <div class="chart-section" id="kw-chart">
+                    <div class="chart-header">
+                        <h1 class="chart-title2"> A/C & </h1>
+                        <h1 class="chart-title3">Other (Power) kW</h1>
+                        <div class="chart-summary">
+                           <div class="summary-box"> <span class="label">Solar Cell</span> <span class="value">last : 400<span class="unit">kW</span></span> </div>
+                           <div class="summary-box"> <span class="label">Import grid</span> <span class="value">last : 500<span class="unit">kW</span></span> </div>
+                           <div class="summary-box"> <span class="label">Total Power Consumption</span> <span class="value">last : 900<span class="unit">kWh</span></span> </div>
+                        </div>
+                    </div>
+                    <div class="chart-container"><canvas id="ac_kwChartCanvas"></canvas></div>
+                </div>
+                        
+                 <div class="chart-section" id="a-chart">
+                    <div class="chart-header">
+                        <h2 class="chart-title4"> A/C &  </h2>
+                        <h2 class="chart-title5"> Other (Current) A</h2>
+                        <div class="chart-summary">
+                           <div class="summary-box"> <span class="label">Solar Cell</span> <span class="value">last : 212<span class="unit">A</span></span> </div>
+                           <div class="summary-box"> <span class="label">Import grid</span> <span class="value">last : 212<span class="unit">A</span></span> </div>
+                           <div class="summary-box"> <span class="label">Total Current Consumption</span> <span class="value">last : 424<span class="unit">A</span></span> </div>
+                        </div>
+                    </div>
+                    <div class="chart-container"><canvas id="ac_aChartCanvas"></canvas></div>
+                </div>
+
+                <div class="chart-section" id="v-chart">
+                    <div class="chart-header">
+                        <h2 class="chart-title6">A/C &</h2>
+                        <h2 class="chart-title7"> Other (Voltage) V</h2>
+                        <div class="chart-summary">
+                           <div class="summary-box"> <span class="label">Solar Cell</span> <span class="value">last : 231<span class="unit">V</span></span> </div>
+                           <div class="summary-box"> <span class="label">Import grid</span> <span class="value">last : 232<span class="unit">V</span></span> </div>
+                           <div class="summary-box"> <span class="label">Average Voltage</span> <span class="value">last : 231<span class="unit">V</span></span> </div>
+                        </div>
+                    </div>
+                    <div class="chart-container"><canvas id="ac_vChartCanvas"></canvas></div>
+                </div>
+
+                 <div class="chart-section" id="pf-chart">
+                    <div class="chart-header">
+                        <h2 class="chart-title8">A/C &</h2>
+                        <h2 class="chart-title9">Other (Power Factor) PF</h2>
+
+                        <div class="chart-summary">
+                           <div class="summary-box"> <span class="label">Solar Cell</span> <span class="value">last : 0.95</span> </div>
+                           <div class="summary-box"> <span class="label">Import grid</span> <span class="value">last : 0.95</span> </div>
+                           <div class="summary-box"> <span class="label">Average Power Factor</span> <span class="value">last : 0.95</span> </div>
+                        </div>
+                    </div>
+                    <div class="chart-container"><canvas id="ac_pfChartCanvas"></canvas></div>
+                </div>
+            </div>   
+
+<!-- ------------------------------------------------------------------------------------------------------------------------------------------------------------- -->
+                <div class="ahu">
+                    <h1 class="ahu01">
+                        <b>AHU</b>
+                    </h1>
+                </div>
+
+                 <div class="chart-section" id="ahu-chart">
+                    <div class="chart-header">
+                        <h2 class="chart-title">AHU 01</h2>
+                        <div class="chart-summary"> </div>
+                    </div>
+                     <div class="chart-container">
+                        <canvas id="ahuCombinedChartCanvas"></canvas>
+                    </div>
+
+                    <hr class="mmmm">
+
+                    <div class="chart-header">
+                        <h2 class="chart-title" id="cccc">Energy (kWh)</h2>
+                        
+                        <div class="chart-summary" id="bbbb2">
+                            <p>Energy (kWh)</p> 
+                            <h3 class="">Last : 50 kWh</h3>                       </div>
+                        <div class="chart-summary" id="bbbb3" >
+                            <p>Total Energy (kWh) </p>
+                            <h3>Today : 100 kWh</h3>
+                        </div>
+                    </div>
+                     <div class="chart-container" style="width: 82.5%; margin-top: -40px;">
+                        <canvas id="kWhCombinedChartCanvas"></canvas>
+                    </div>
+                 </div>
+             </div>
+
+             <script>
+                function toggleMenu(menuId) {
+                    const menu = document.getElementById(menuId);
+                    if (menu) {
+                        menu.classList.toggle('active-menu');
+                    }
+                }
+                // --- Global Variables ---
+                let allCharts = {};
+                let flatpickrStartInstance, flatpickrEndInstance; // To store flatpickr instances
+
+                // --- Helper Functions (generateRandomData - เหมือนเดิม) ---
+                function generateRandomData(count, min, max, decimals = 0) {
+                    const data = [];
+                    for (let i = 0; i < count; i++) {
+                        let rand = Math.random() * (max - min) + min;
+                        data.push(parseFloat(rand.toFixed(decimals)));
+                    }
+                    return data;
+                }
+
+                // --- Helper Function: Generate Time Labels (Modified) ---
+                function generateTimeLabels(config) {
+                    const labels = [];
+                    const { type, value, start, end } = config;
+                    let currentMoment;
+                    let endMoment;
+                    let count = 10; // Default number of points for absolute range
+                    let unit, step, format;
+
+                    if (type === 'relative') {
+                        endMoment = moment(); // Now
+                        switch (value) {
+                            case '5m':  count = 5; unit = 'minutes'; step = 1; format = 'HH:mm:ss'; break;
+                            case '15m': count = 6; unit = 'minutes'; step = 3; format = 'HH:mm'; break;
+                            case '30m': count = 6; unit = 'minutes'; step = 5; format = 'HH:mm'; break;
+                            case '1h':  count = 6; unit = 'minutes'; step = 10; format = 'HH:mm'; break;
+                            case '3h':  count = 6; unit = 'minutes'; step = 30; format = 'HH:mm'; break;
+                            case '12h': count = 12; unit = 'hours'; step = 1; format = 'HH:00'; break;
+                            case '24h': count = 12; unit = 'hours'; step = 2; format = 'DD HH:00'; break;
+                            case '2d':  count = 12; unit = 'hours'; step = 4; format = 'DD HH:00'; break;
+                            case '6h':
+                            default:    count = 6; unit = 'hours'; step = 1; format = 'HH:00'; break;
+                        }
+                        currentMoment = endMoment.clone().subtract(count * step, unit); // Calculate start time
+                    } 
+                    else if (type === 'absolute' && start && end) {
+                        currentMoment = start.clone();
+                        endMoment = end.clone();
+                        const durationMinutes = endMoment.diff(currentMoment, 'minutes');
+
+                        // Determine interval dynamically (aim for ~10-20 labels)
+                        if (durationMinutes <= 60) { // Up to 1 hour
+                            step = Math.max(1, Math.floor(durationMinutes / 10)); unit = 'minutes'; format = 'HH:mm';
+                        } else if (durationMinutes <= 6 * 60) { // Up to 6 hours
+                             step = Math.max(5, Math.floor(durationMinutes / 12)); unit = 'minutes'; format = 'HH:mm';
+                        } else if (durationMinutes <= 24 * 60) { // Up to 1 day
+                             step = Math.max(30, Math.floor(durationMinutes / 15)); unit = 'minutes'; format = 'DD HH:mm';
+                        } else { // More than 1 day
+                             step = Math.max(1, Math.floor(durationMinutes / (20 * 60))); unit = 'hours'; format = 'DD/MM HH:00'; // Calculate step in hours
+                        }
+                         // Recalculate count based on dynamic step
+                         count = Math.ceil(durationMinutes / (step * (unit === 'minutes' ? 1 : 60)));
+                         count = Math.min(count, 50); // Limit max points for performance
+
+                    } 
+                    else {
+                        return []; // Invalid config
+                    }
+
+                     // Generate labels based on calculated interval
+                     for (let i = 0; i < count && currentMoment.isBefore(endMoment); i++) {
+                         labels.push(currentMoment.format(format));
+                         currentMoment.add(step, unit);
+                     }
+                      // Ensure the last label is the end time if possible
+                     if (labels[labels.length - 1] !== endMoment.format(format) && labels.length > 0) {
+                         labels.push(endMoment.format(format));
+                     }
+                     if (labels.length === 0 && start && end) { // Handle case where range is very small
+                         labels.push(start.format(format));
+                         if (start.format(format) !== end.format(format)) {
+                             labels.push(end.format(format));
+                         }
+                     }
+
+
+                    return { labels, count: labels.length }; // Return labels and actual count
+                }
+
+
+                // --- Chart Update Function (Modified) ---
+                function updateCharts(timeConfig) {
+                    if (!timeConfig || (timeConfig.type === 'absolute' && (!timeConfig.start || !timeConfig.end))) {
+                         console.error("Invalid time configuration:", timeConfig);
+                         return; // Exit if config is invalid
+                     }
+
+                    const { labels: newLabels, count: dataPointCount } = generateTimeLabels(timeConfig);
+
+                    if (dataPointCount === 0) {
+                         console.warn("No data points to generate for the selected range.");
+                         // Optionally clear charts or show a message
+                         return;
+                     }
+
+
+                    // Update each chart
+                    if (allCharts.kwhChart) {
+                        const kwhDataTotal = generateRandomData(dataPointCount, 100, 500);
+                        allCharts.kwhChart.data.labels = newLabels;
+                        allCharts.kwhChart.data.datasets[0].data = kwhDataTotal;
+                        allCharts.kwhChart.update('none'); // 'none' prevents animation flicker
+                    }
+                     if (allCharts.kwChart) {
+                         const kwDataAC = generateRandomData(dataPointCount, 50, 250);
+                         allCharts.kwChart.data.labels = newLabels;
+                         allCharts.kwChart.data.datasets[0].data = kwDataAC;
+                         allCharts.kwChart.update('none');
+                     }
+                     if (allCharts.aChart) {
+                         const aDataAC = generateRandomData(dataPointCount, 150, 400);
+                         allCharts.aChart.data.labels = newLabels;
+                         allCharts.aChart.data.datasets[0].data = aDataAC;
+                         allCharts.aChart.update('none');
+                     }
+                     if (allCharts.vChart) {
+                         const vDataAC = generateRandomData(dataPointCount, 225, 235);
+                         allCharts.vChart.data.labels = newLabels;
+                         allCharts.vChart.data.datasets[0].data = vDataAC;
+                         // Y-axis min/max are fixed in options, no need to update here unless dynamic range is needed
+                         allCharts.vChart.update('none');
+                     }
+                     if (allCharts.pfChart) {
+                         const pfDataAC = generateRandomData(dataPointCount, 0.85, 0.99, 2);
+                         allCharts.pfChart.data.labels = newLabels;
+                         allCharts.pfChart.data.datasets[0].data = pfDataAC;
+                          // Y-axis min/max are fixed in options
+                         allCharts.pfChart.update('none');
+                     }
+
+
+                     if (allCharts.acKwhChart) {
+        const acKwhDataAC = generateRandomData(dataPointCount, 100, 300);
+        const acKwhDataOther = generateRandomData(dataPointCount, 100, 300);
+        allCharts.acKwhChart.data.labels = newLabels;
+        allCharts.acKwhChart.data.datasets[0].data = acKwhDataAC;
+        allCharts.acKwhChart.data.datasets[1].data = acKwhDataOther;
+        allCharts.acKwhChart.update('none');
+    }
+
+    if (allCharts.acKwChart) {
+        const acKwDataAC = generateRandomData(dataPointCount, 50, 200);
+        const acKwDataOther = generateRandomData(dataPointCount, 50, 200);
+        allCharts.acKwChart.data.labels = newLabels;
+        allCharts.acKwChart.data.datasets[0].data = acKwDataAC;
+        allCharts.acKwChart.data.datasets[1].data = acKwDataOther;
+        allCharts.acKwChart.update('none');
+    }
+
+    if (allCharts.acAChart) {
+        const acADataAC = generateRandomData(dataPointCount, 150, 350);
+        const acADataOther = generateRandomData(dataPointCount, 150, 350);
+        allCharts.acAChart.data.labels = newLabels;
+        allCharts.acAChart.data.datasets[0].data = acADataAC;
+        allCharts.acAChart.data.datasets[1].data = acADataOther;
+        allCharts.acAChart.update('none');
+    }
+
+    if (allCharts.acVChart) {
+        const acVDataAC = generateRandomData(dataPointCount, 225, 235);
+        const acVDataOther = generateRandomData(dataPointCount, 225, 235);
+        allCharts.acVChart.data.labels = newLabels;
+        allCharts.acVChart.data.datasets[0].data = acVDataAC;
+        allCharts.acVChart.data.datasets[1].data = acVDataOther;
+        allCharts.acVChart.update('none');
+    }
+
+    if (allCharts.acPFChart) {
+        const acPFDataAC = generateRandomData(dataPointCount, 0.85, 0.99, 2);
+        const acPFDataOther = generateRandomData(dataPointCount, 0.85, 0.99, 2);
+        allCharts.acPFChart.data.labels = newLabels;
+        allCharts.acPFChart.data.datasets[0].data = acPFDataAC;
+        allCharts.acPFChart.data.datasets[1].data = acPFDataOther;
+        allCharts.acPFChart.update('none');
+    }
+
+
+                     // **** START: AHU Chart Update Block ****
+                     if (allCharts.ahuCombinedChart) {
+                        const pfData = generateRandomData(dataPointCount, -0.98, 0.98, 2);
+                        const vData = generateRandomData(dataPointCount, 228, 234);
+                        const aData = generateRandomData(dataPointCount, 280, 400);
+                        const kwData = generateRandomData(dataPointCount, 1800, 2500);
+
+                        allCharts.ahuCombinedChart.data.labels = newLabels;
+                        allCharts.ahuCombinedChart.data.datasets[0].data = pfData; // PF
+                        allCharts.ahuCombinedChart.data.datasets[1].data = vData;  // V
+                        allCharts.ahuCombinedChart.data.datasets[2].data = aData;  // A
+                        allCharts.ahuCombinedChart.data.datasets[3].data = kwData; // kW
+                        allCharts.ahuCombinedChart.update('none');
+                     }
+                     // **** END: AHU Chart Update Block ****
+
+
+                     // **** START: kWh Combined Chart Update Block (ADDED) ****
+                     if (allCharts.kwhCombinedChart) {
+                         const kwhCombinedData = generateRandomData(dataPointCount, 10, 500, 1); // สร้างข้อมูลตัวอย่างสำหรับ kWh (อาจต้องปรับช่วงค่า)
+                         allCharts.kwhCombinedChart.data.labels = newLabels;
+                         allCharts.kwhCombinedChart.data.datasets[0].data = kwhCombinedData;
+                         allCharts.kwhCombinedChart.update('none');
+                     }
+                     // **** END: kWh Combined Chart Update Block (ADDED) ****
+                }
+
+                // --- DOMContentLoaded ---
+                document.addEventListener('DOMContentLoaded', () => {
+                    // --- Initialize Flatpickr ---
+                    const flatpickrOptions = {
+                        enableTime: true,
+                        dateFormat: "Y-m-d H:i", // ISO format with time
+                        time_24hr: true,
+                        altInput: true, // Shows a more readable format to the user
+                        altFormat: "M j, Y H:i",
+                    };
+                    flatpickrStartInstance = flatpickr("#startTimeInput", { ...flatpickrOptions, defaultDate: moment().subtract(6, 'hours').toDate() }); // Default start
+                    flatpickrEndInstance = flatpickr("#endTimeInput", { ...flatpickrOptions, defaultDate: new Date() }); // Default end (now)
+
+
+                    // --- Initialize Charts (เหมือนเดิม แต่เก็บใน allCharts) ---
+                    const gridColor = 'rgba(255, 255, 255, 0.1)';
+                    const labelColor = 'rgba(255, 255, 255, 0.7)';
+
+                    // kWh Chart
+                    const kwhCtx = document.getElementById('kwhChartCanvas').getContext('2d');
+                    allCharts.kwhChart = new Chart(kwhCtx, { type: 'bar', data: { labels: [], datasets: [{ label: 'Total Energy', data: [], backgroundColor: 'rgba(75, 192, 192, 0.8)', borderColor: 'rgba(75, 192, 192, 1)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: labelColor } }, x: { grid: { color: gridColor }, ticks: { color: labelColor, maxRotation: 0, autoSkip: true, maxTicksLimit: 15 } } } } });
+
+                    // kW Chart
+                    // For these line charts: kW, V, and A charts
+// The issue is in these configurations:
+
+// kW Chart configuration fix
+const kwCtx = document.getElementById('kwChartCanvas').getContext('2d');
+allCharts.kwChart = new Chart(kwCtx, { 
+    type: 'line', 
+    data: { 
+        labels: [], 
+        datasets: [{ 
+            label: 'A/C Power', 
+            data: [], 
+            borderColor: 'rgba(255, 215, 0, 1)', 
+            backgroundColor: 'rgba(255, 215, 0, 0.3)', 
+            fill: true, 
+            tension: 0.4 
+        }] 
+    }, 
+    options: { 
+        responsive: true, 
+        maintainAspectRatio: false, 
+        animation: false, 
+        plugins: { 
+            legend: { display: false },
+            tooltip: { 
+                enabled: true,
+                mode: 'index',
+                intersect: false
+            }
+        }, 
+        scales: { 
+            y: { 
+                beginAtZero: true, 
+                grid: { color: gridColor }, 
+                ticks: { color: labelColor } 
+            }, 
+            x: { 
+                grid: { color: gridColor }, 
+                ticks: { 
+                    color: labelColor, 
+                    maxRotation: 0, 
+                    autoSkip: true, 
+                    maxTicksLimit: 15 
+                } 
+            } 
+        }, 
+        elements: { 
+            point: { 
+                radius: 0,
+                // Make points appear on hover
+                hoverRadius: 5,
+                hoverBackgroundColor: 'rgba(255, 215, 0, 1)'
+            },
+            line: {
+                borderWidth: 2
+            }
+        },
+        interaction: {
+            mode: 'index',
+            intersect: false
+        }
+    } 
+});
+
+// A Chart configuration fix
+const aCtx = document.getElementById('aChartCanvas').getContext('2d');
+allCharts.aChart = new Chart(aCtx, { 
+    type: 'line', 
+    data: { 
+        labels: [], 
+        datasets: [{ 
+            label: 'A/C Current', 
+            data: [], 
+            borderColor: 'rgba(255, 0, 255, 1)', 
+            backgroundColor: 'rgba(255, 0, 255, 0.3)', 
+            fill: true, 
+            tension: 0.4 
+        }] 
+    }, 
+    options: { 
+        responsive: true, 
+        maintainAspectRatio: false, 
+        animation: false, 
+        plugins: { 
+            legend: { display: false },
+            tooltip: { 
+                enabled: true,
+                mode: 'index',
+                intersect: false
+            }
+        }, 
+        scales: { 
+            y: { 
+                beginAtZero: true, 
+                grid: { color: gridColor }, 
+                ticks: { color: labelColor } 
+            }, 
+            x: { 
+                grid: { color: gridColor }, 
+                ticks: { 
+                    color: labelColor, 
+                    maxRotation: 0, 
+                    autoSkip: true, 
+                    maxTicksLimit: 15 
+                } 
+            } 
+        }, 
+        elements: { 
+            point: { 
+                radius: 0,
+                // Make points appear on hover
+                hoverRadius: 5,
+                hoverBackgroundColor: 'rgba(255, 0, 255, 1)'
+            },
+            line: {
+                borderWidth: 2
+            }
+        },
+        interaction: {
+            mode: 'index',
+            intersect: false
+        }
+    } 
+});
+
+// V Chart configuration fix
+const vCtx = document.getElementById('vChartCanvas').getContext('2d');
+allCharts.vChart = new Chart(vCtx, { 
+    type: 'line', 
+    data: { 
+        labels: [], 
+        datasets: [{ 
+            label: 'A/C Voltage', 
+            data: [], 
+            borderColor: 'rgba(25, 215, 0, 1)', 
+            backgroundColor: 'rgba(25, 215, 0, 0.3)', 
+            fill: true, 
+            tension: 0.1 
+        }] 
+    }, 
+    options: { 
+        responsive: true, 
+        maintainAspectRatio: false, 
+        animation: false, 
+        plugins: { 
+            legend: { display: false },
+            tooltip: { 
+                enabled: true,
+                mode: 'index',
+                intersect: false
+            }
+        }, 
+        scales: { 
+            y: { 
+                beginAtZero: false, 
+                min: 220, 
+                max: 240, 
+                grid: { color: gridColor }, 
+                ticks: { color: labelColor } 
+            }, 
+            x: { 
+                grid: { color: gridColor }, 
+                ticks: { 
+                    color: labelColor, 
+                    maxRotation: 0, 
+                    autoSkip: true, 
+                    maxTicksLimit: 15 
+                } 
+            } 
+        }, 
+        elements: { 
+            point: { 
+                radius: 0,
+                // Make points appear on hover
+                hoverRadius: 5,
+                hoverBackgroundColor: 'rgba(25, 215, 0, 1)'
+            },
+            line: {
+                borderWidth: 2
+            }
+        },
+        interaction: {
+            mode: 'index',
+            intersect: false
+        }
+    } 
+});
+                    // PF Chart
+                    const pfCtx = document.getElementById('pfChartCanvas').getContext('2d');
+                    allCharts.pfChart = new Chart(pfCtx, { type: 'bar', data: { labels: [], datasets: [{ label: 'Average Power Factor', data: [], backgroundColor: 'rgba(0, 0, 195, 0.8)', borderColor: 'rgba(0, 0, 195, 1)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false, min: 0.8, max: 1.0, grid: { color: gridColor }, ticks: { color: labelColor } }, x: { grid: { color: gridColor }, ticks: { color: labelColor, maxRotation: 0, autoSkip: true, maxTicksLimit: 15 } } } } });
+
+                   // AHU Combined Chart
+                    const ahuCombinedCtx = document.getElementById('ahuCombinedChartCanvas').getContext('2d');
+                    allCharts.ahuCombinedChart = new Chart(ahuCombinedCtx, { // <-- ตัวนี้ถูกต้องอยู่แล้ว
+                        type: 'line', data: { labels: [], datasets: [ { label: 'PF', data: [], borderColor: 'rgba(255, 0, 255, 1)', fill: false, tension: 0.4, yAxisID: 'yPF' }, { label: 'V', data: [], borderColor: 'rgba(25, 215, 0, 1)', fill: false, tension: 0.4, yAxisID: 'yV' }, { label: 'A', data: [], borderColor: 'rgba(255, 165, 0, 1)', fill: false, tension: 0.4, yAxisID: 'yA' }, { label: 'kW', data: [], borderColor: 'rgba(75, 192, 192, 1)', fill: false, tension: 0.4, yAxisID: 'ykW' } ] },
+                        options: { responsive: true, maintainAspectRatio: false, animation: false, interaction: { mode: 'index', intersect: false }, stacked: false, plugins: { legend: { display: true, labels: { color: labelColor } } },
+                            scales: {
+                                x: { grid: { color: gridColor }, ticks: { color: labelColor, maxRotation: 0, autoSkip: true, maxTicksLimit: 15 }, title: { display: true, text: 'Time', color: labelColor } },
+                                yPF: { type: 'linear', display: true, position: 'left', min: -1, max: 1, title: { display: true, text: 'PF', color: 'rgba(255, 0, 255, 1)' }, ticks: { color: 'rgba(255, 0, 255, 1)' }, grid: { drawOnChartArea: false } },
+                                yV:  { type: 'linear', display: true, position: 'left', min: 200, max: 250, title: { display: true, text: 'Voltage (V)', color: 'rgba(25, 215, 0, 1)' }, ticks: { color: 'rgba(25, 215, 0, 1)' }, grid: { drawOnChartArea: false } },
+                                yA:  { type: 'linear', display: true, position: 'left', min: 0, max: 500, title: { display: true, text: 'Current (A)', color: 'rgba(255, 165, 0, 1)' }, ticks: { color: 'rgba(255, 165, 0, 1)' }, grid: { drawOnChartArea: false } },
+                                ykW: { type: 'linear', display: true, position: 'left', min: 0, max: 3000, title: { display: true, text: 'Power (kW)', color: 'rgba(75, 192, 192, 1)' }, ticks: { color: 'rgba(75, 192, 192, 1)' }, grid: { drawOnChartArea: false } }
+                            }, elements: { point: { radius: 1 } }
+                        }
+                    });
+
+                    // **** START: kWh Combined Chart Initialization Block (แก้ไขแล้ว) ****
+                    const kWhCombinedCtx = document.getElementById('kWhCombinedChartCanvas').getContext('2d');
+                    // *** จุดที่ 1: เปลี่ยนจาก allCharts.ahuCombinedChart เป็น allCharts.kwhCombinedChart ***
+                    allCharts.kwhCombinedChart = new Chart(kWhCombinedCtx, {
+                        type: 'bar', data: { labels: [], datasets: [{ 
+                            label: 'kWh', 
+                            data: [], 
+                            backgroundColor: 'rgba(255, 0, 255, 0.8)',
+                            borderColor: 'rgba(255, 0, 255, 1)', 
+                            borderWidth: 1, 
+                            // fill: false, 
+                            // tension: 0.4, 
+                            yAxisID: 'ykWh' 
+                        }, // มีแค่ 1 dataset
+                             ] },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: false,
+                            interaction: { 
+                                mode: 'index', 
+                                intersect: false 
+                            },
+                            stacked: false, 
+                            plugins: { 
+                                legend: { 
+                                    display: true,
+                                    labels: { 
+                                        color: labelColor 
+                                    } 
+                                } 
+                            },
+
+                            scales: {
+                                x: {
+                                grid: { color: gridColor },
+                                ticks: {
+                                    color: labelColor,
+                                    maxRotation: 0,
+                                    autoSkip: true,
+                                    maxTicksLimit: 15
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Time', color:
+                                    labelColor
+                                } },
+                                ykWh: { // *** ตั้งค่าแกน Y สำหรับ kWh ใหม่ ***
+                                    type: 'linear',
+                                    display: true,
+                                    position: 'left',
+                                    min: 0, // *** จุดที่ 2: กำหนด min เป็น 0 (หรืออาจจะไม่ต้องกำหนดก็ได้) ***
+                                    // max: ไม่ต้องกำหนด max เพื่อให้ปรับอัตโนมัติ
+                                title: {
+                                    display: true, // *** จุดที่ 3: แก้ไข isplay -> display ***
+                                    text: 'Energy (kWh)',   // *** จุดที่ 4: เปลี่ยนชื่อแกน ***
+                                    color: 'rgba(255, 0, 255, 1)' 
+                                },
+                                    ticks: { color: 'rgba(255, 0, 255, 1)' },
+                                    grid: { drawOnChartArea: false
+                                } },
+                            },
+                            elements: { point: { radius: 1 } }
+                        }
+                    });
+                    // **** END: kWh Combined Chart Initialization Block (แก้ไขแล้ว) ****
+
+
+                    // --- Event Listeners ---
+                    const timeRangeSelect = document.getElementById('timeRangeSelect');
+                    const applyButton = document.getElementById('applyTimeRange');
+
+                    // Listener for Relative Time Dropdown
+                    timeRangeSelect.addEventListener('change', (event) => {
+                        const selectedValue = event.target.value;
+                        if (selectedValue !== 'custom') {
+                            updateCharts({ type: 'relative', value: selectedValue });
+                        }
+                        // If 'custom' is selected, do nothing here, wait for Apply button
+                    });
+
+                    // Listener for Apply Button (Absolute Time)
+                    applyButton.addEventListener('click', () => {
+                        const startDateStr = flatpickrStartInstance.input.value; // Get value from original input
+                        const endDateStr = flatpickrEndInstance.input.value;
+
+                         // Basic validation
+                         if (!startDateStr || !endDateStr) {
+                             alert("Please select both start and end date/time.");
+                             return;
+                         }
+
+                         const startTime = moment(startDateStr, "YYYY-MM-DD HH:mm"); // Use the format flatpickr stores
+                         const endTime = moment(endDateStr, "YYYY-MM-DD HH:mm");
+
+                         if (!startTime.isValid() || !endTime.isValid()) {
+                             alert("Invalid date/time format selected.");
+                             return;
+                         }
+
+                         if (endTime.isBefore(startTime)) {
+                            alert("End time cannot be before start time.");
+                            return;
+                         }
+
+                        // Set dropdown to 'Custom Range' to indicate absolute mode
+                        timeRangeSelect.value = 'custom';
+
+                        updateCharts({ type: 'absolute', start: startTime, end: endTime });
+                    });
+
+                    // --- Initial Chart Load ---
+                    // Load based on the default selected value in the dropdown
+                     const initialTimeValue = timeRangeSelect.value;
+                     if (initialTimeValue !== 'custom') {
+                        updateCharts({ type: 'relative', value: initialTimeValue });
+                     } else {
+                         // If default is 'custom', maybe load based on initial flatpickr values
+                         const initialStart = moment(flatpickrStartInstance.selectedDates[0]);
+                         const initialEnd = moment(flatpickrEndInstance.selectedDates[0]);
+                         if (initialStart.isValid() && initialEnd.isValid() && initialEnd.isAfter(initialStart)) {
+                             updateCharts({ type: 'absolute', start: initialStart, end: initialEnd });
+                         }
+                     }
+
+
+                     // Sidebar menu toggle (ส่วนนี้อาจจะต้องตรวจสอบว่ามีฟังก์ชัน toggleMenu ที่ถูกต้องอยู่แล้ว)
+                     /*
+                     // ถ้ายังไม่มีฟังก์ชันนี้ ให้ยกเลิกคอมเมนต์และนำไปใส่แทน
+                     function toggleMenu(menuId) {
+                         const menu = document.getElementById(menuId);
+                         const parentItem = menu.previousElementSibling; // Get the parent nav-item/sub-item
+                         if (menu) {
+                             menu.classList.toggle('active-menu');
+                             if (parentItem) {
+                                 parentItem.classList.toggle('active-parent'); // Toggle active state on parent for icon rotation
+                             }
+                         }
+                     }
+                     */
+                     // Add event listener for dropdown items in the sidebar if needed
+                     document.querySelectorAll('.nav-item[onclick*="toggleMenu"], .sub-item[onclick*="toggleMenu"]').forEach(item => {
+                        // Ensure icons rotate correctly based on initial state if menus are pre-opened
+                        const targetMenuId = item.getAttribute('onclick').match(/toggleMenu\('([^']+)'\)/)[1];
+                        const targetMenu = document.getElementById(targetMenuId);
+                        if (targetMenu && targetMenu.classList.contains('active-menu')) {
+                           item.classList.add('active-parent');
+                        }
+                     });
+
+
+                }); // End DOMContentLoaded
+
+
+
+
+
+ // Apply active parent style on load
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.sub-menu.active-menu').forEach(menu => {
+                const parentItem = menu.previousElementSibling;
+                if (parentItem) parentItem.classList.add('active-parent');
+            });
+
+            // --- Chart Initialization ---
+            const chartLabels = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+            const gridColor = 'rgba(255, 255, 255, 0.1)'; // สีเส้นกริด
+            const labelColor = 'rgba(255, 255, 255, 0.7)'; // สีป้ายกำกับแกน
+
+            // kWh Chart (Bar)
+            const kwhCtx = document.getElementById('kwhChartCanvas').getContext('2d');
+            new Chart(kwhCtx, {
+                type: 'bar',
+                data: {
+                    labels: chartLabels,
+                    datasets: [
+                        {
+                            label: 'A/C',
+                            data: [150, 300, 200, 100, 180, 220, 250, 200, 300, 280, 250], // Sample data
+                            backgroundColor: 'rgba(147, 112, 219, 0.8)', // Purple
+                            borderColor: 'rgba(147, 112, 219, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Other',
+                            data: [200, 250, 350, 150, 120, 150, 180, 280, 220, 320, 300], // Sample data
+                            backgroundColor: 'rgba(60, 179, 113, 0.8)', // Green
+                            borderColor: 'rgba(60, 179, 113, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }, // ซ่อน legend ตามรูป
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: labelColor } },
+                        x: { grid: { color: gridColor }, ticks: { color: labelColor } }
+                    }
+                }
+            });
+
+            // kW Chart (Line with Area)
+const kwCtx = document.getElementById('kwChartCanvas').getContext('2d');
+new Chart(kwCtx, {
+    type: 'line',
+    data: {
+        labels: chartLabels,
+        datasets: [
+            {
+                label: 'A/C',
+                data: [150, 180, 120, 80, 100, 150, 180, 160, 200, 220, 190], // Sample data
+                borderColor: 'rgba(255, 215, 0, 1)', // Yellow
+                backgroundColor: 'rgba(255, 215, 0, 0.3)',
+                fill: true, 
+                tension: 0.4 // ทำให้เส้นโค้ง
+            },
+            {
+                label: 'Other',
+                data: [200, 220, 180, 100, 130, 190, 210, 200, 230, 250, 220], // Sample data
+                borderColor: 'rgba(173, 216, 230, 1)', // Light Blue/Purple-ish
+                backgroundColor: 'rgba(173, 216, 230, 0.3)',
+                fill: true, 
+                tension: 0.4
+            }
+        ]
+    },
+    options: {
+        responsive: true, 
+        maintainAspectRatio: false,
+        plugins: { 
+            legend: { display: false },
+            tooltip: {  // เพิ่ม tooltip configuration
+                enabled: true,
+                mode: 'index',
+                intersect: false
+            }
+        },
+        scales: {
+            y: { beginAtZero: true, max: 250, grid: { color: gridColor }, ticks: { color: labelColor } }, // ตั้ง max ตามรูป
+            x: { grid: { color: gridColor }, ticks: { color: labelColor } }
+        },
+        elements: { 
+            point: { 
+                radius: 0, // ซ่อนจุดบนเส้น
+                hoverRadius: 5, // แสดงจุดเมื่อ hover
+                hoverBackgroundColor: function(context) {
+                    return context.dataset.borderColor; // ใช้สีเดียวกับเส้น
+                }
+            },
+            line: {
+                borderWidth: 2 // เพิ่มความหนาของเส้น
+            }
+        },
+        interaction: { // เพิ่มการตั้งค่าการโต้ตอบ
+            mode: 'index',
+            intersect: false
+        }
+    }
+});
+
+// แก้ไขสำหรับกราฟ A
+const aCtx = document.getElementById('aChartCanvas').getContext('2d');
+new Chart(aCtx, {
+    type: 'line',
+    data: {
+        labels: chartLabels,
+        datasets: [
+            {
+                label: 'A/C',
+                data: [300, 320, 250, 200, 220, 280, 310, 300, 350, 380, 340], // Sample data
+                borderColor: 'rgba(255, 0, 255, 1)', // Magenta
+                backgroundColor: 'rgba(255, 0, 255, 0.3)',
+                fill: true, 
+                tension: 0.4
+            },
+            {
+                label: 'Other',
+                data: [350, 360, 300, 220, 260, 320, 350, 340, 380, 400, 370], // Sample data
+                borderColor: 'rgba(0, 255, 127, 1)', // Spring Green
+                backgroundColor: 'rgba(0, 255, 127, 0.3)',
+                fill: true, 
+                tension: 0.4
+            }
+        ]
+    },
+    options: {
+        responsive: true, 
+        maintainAspectRatio: false,
+        plugins: { 
+            legend: { display: false },
+            tooltip: {  // เพิ่ม tooltip configuration
+                enabled: true,
+                mode: 'index',
+                intersect: false
+            }
+        },
+        scales: {
+            y: { beginAtZero: true, max: 400, grid: { color: gridColor }, ticks: { color: labelColor } },
+            x: { grid: { color: gridColor }, ticks: { color: labelColor } }
+        },
+        elements: { 
+            point: { 
+                radius: 0,
+                hoverRadius: 5, // แสดงจุดเมื่อ hover
+                hoverBackgroundColor: function(context) {
+                    return context.dataset.borderColor;
+                }
+            },
+            line: {
+                borderWidth: 2 // เพิ่มความหนาของเส้น
+            }
+        },
+        interaction: { // เพิ่มการตั้งค่าการโต้ตอบ
+            mode: 'index',
+            intersect: false
+        }
+    }
+});
+
+// แก้ไขสำหรับกราฟ V
+const vCtx = document.getElementById('vChartCanvas').getContext('2d');
+new Chart(vCtx, {
+    type: 'line',
+    data: {
+        labels: chartLabels,
+        datasets: [
+            {
+                label: 'A/C',
+                data: [230, 231, 230, 232, 231, 230, 231, 231, 230, 232, 231], // Sample data (relatively flat)
+                borderColor: 'rgba(255, 215, 0, 1)', // Yellow
+                backgroundColor: 'rgba(255, 215, 0, 0.3)',
+                fill: true, 
+                tension: 0.1 // เกือบตรง
+            },
+            {
+                label: 'Other',
+                data: [232, 232, 231, 233, 232, 232, 233, 232, 231, 233, 232], // Sample data (relatively flat)
+                borderColor: 'rgba(255, 69, 0, 1)', // Red-Orange
+                backgroundColor: 'rgba(255, 69, 0, 0.3)',
+                fill: true, 
+                tension: 0.1
+            }
+        ]
+    },
+    options: {
+        responsive: true, 
+        maintainAspectRatio: false,
+        plugins: { 
+            legend: { display: false },
+            tooltip: {  // เพิ่ม tooltip configuration
+                enabled: true,
+                mode: 'index',
+                intersect: false
+            }
+        },
+        scales: {
+            y: { beginAtZero: false, min: 200, max: 250, grid: { color: gridColor }, ticks: { color: labelColor } }, // ปรับช่วงแกน Y
+            x: { grid: { color: gridColor }, ticks: { color: labelColor } }
+        },
+        elements: { 
+            point: { 
+                radius: 0,
+                hoverRadius: 5, // แสดงจุดเมื่อ hover
+                hoverBackgroundColor: function(context) {
+                    return context.dataset.borderColor;
+                }
+            },
+            line: {
+                borderWidth: 2 // เพิ่มความหนาของเส้น
+            }
+        },
+        interaction: { // เพิ่มการตั้งค่าการโต้ตอบ
+            mode: 'index',
+            intersect: false
+        }
+    }
+});
+
+             // PF Chart (Bar)
+            const pfCtx = document.getElementById('pfChartCanvas').getContext('2d');
+            new Chart(pfCtx, {
+                type: 'bar',
+                data: {
+                    labels: chartLabels,
+                    datasets: [
+                        {
+                            label: 'A/C',
+                            data: [0.95, 0.96, 0.94, 0.92, 0.90, 0.88, 0.90, 0.93, 0.95, 0.96, 0.95], // Sample data
+                            backgroundColor: 'rgba(0, 255, 255, 0.8)', // Cyan
+                            borderColor: 'rgba(0, 255, 255, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Other',
+                            data: [0.96, 0.97, 0.95, 0.93, 0.91, 0.89, 0.91, 0.94, 0.96, 0.97, 0.96], // Sample data
+                            backgroundColor: 'rgba(255, 99, 71, 0.8)', // Tomato Red
+                            borderColor: 'rgba(255, 99, 71, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: false, min: 0.8, max: 1.0, grid: { color: gridColor }, ticks: { color: labelColor } }, // ปรับช่วงแกน Y
+                        x: { grid: { color: gridColor }, ticks: { color: labelColor } }
+                    }
+                }
+            });
+
+        }); // End DOMContentLoaded
+
+
+
+
+
+
+
+
+
+         // Apply active parent style on load
+         document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.sub-menu.active-menu').forEach(menu => {
+                const parentItem = menu.previousElementSibling;
+                if (parentItem) parentItem.classList.add('active-parent');
+            });
+
+            // --- Chart Initialization ---
+            const chartLabels = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+            const gridColor = 'rgba(255, 255, 255, 0.1)'; // สีเส้นกริด
+            const labelColor = 'rgba(255, 255, 255, 0.7)'; // สีป้ายกำกับแกน
+
+          // AC & Other kWh Chart
+const acKwhCtx = document.getElementById('ac_kwhChartCanvas').getContext('2d');
+allCharts.acKwhChart = new Chart(acKwhCtx, {
+    type: 'bar',
+    data: {
+        labels: [],
+        datasets: [
+            {
+                label: 'A/C',
+                data: [],
+                backgroundColor: 'rgba(255, 0, 255, 1)',
+                borderColor: 'rgba(255, 0, 255, 0.2)',
+                borderWidth: 1
+            },
+            {
+                label: 'Other',
+                data: [],
+                backgroundColor: 'rgba(60, 400, 13, 0.8)',
+                borderColor: 'rgba(60, 400, 13, 0.8)',
+                borderWidth: 1
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: labelColor } },
+            x: { grid: { color: gridColor }, ticks: { color: labelColor, maxRotation: 0, autoSkip: true, maxTicksLimit: 15 } }
+        }
+    }
+});
+
+// AC & Other kW Chart
+const acKwCtx = document.getElementById('ac_kwChartCanvas').getContext('2d');
+allCharts.acKwChart = new Chart(acKwCtx, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [
+            {
+                label: 'A/C',
+                data: [],
+                backgroundColor: 'rgba(255, 0, 255, 0.3)',
+                borderColor: 'rgba(255, 0, 255, 1)',
+                fill: true,
+                tension: 0.4
+            },
+            {
+                label: 'Other',
+                data: [],
+                backgroundColor: 'rgba(60, 225, 13, 0.3)',
+                borderColor: 'rgba(60, 225, 13, 1)',
+                fill: true,
+                tension: 0.4
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { 
+            legend: { display: false },
+            tooltip: { enabled: true, mode: 'index', intersect: false }
+        },
+        scales: {
+            y: { beginAtZero: true, max: 250, grid: { color: gridColor }, ticks: { color: labelColor } },
+            x: { grid: { color: gridColor }, ticks: { color: labelColor, maxRotation: 0, autoSkip: true, maxTicksLimit: 15 } }
+        },
+        elements: { 
+            point: { 
+                radius: 0,
+                hoverRadius: 5,
+                hoverBackgroundColor: function(context) {
+                    return context.dataset.borderColor;
+                }
+            },
+            line: { borderWidth: 2 }
+        },
+        interaction: { mode: 'index', intersect: false }
+    }
+});
+
+// AC & Other A Chart
+const acACtx = document.getElementById('ac_aChartCanvas').getContext('2d');
+allCharts.acAChart = new Chart(acACtx, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [
+            {
+                label: 'A/C',
+                data: [],
+                backgroundColor: 'rgba(255, 0, 255, 0.3)',
+                borderColor: 'rgba(255, 0, 255, 1)',
+                fill: true,
+                tension: 0.4
+            },
+            {
+                label: 'Other',
+                data: [],
+                backgroundColor: 'rgba(60, 225, 13, 0.3)',
+                borderColor: 'rgba(60, 225, 13, 1)',
+                fill: true,
+                tension: 0.4
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { 
+            legend: { display: false },
+            tooltip: { enabled: true, mode: 'index', intersect: false }
+        },
+        scales: {
+            y: { beginAtZero: true, max: 400, grid: { color: gridColor }, ticks: { color: labelColor } },
+            x: { grid: { color: gridColor }, ticks: { color: labelColor, maxRotation: 0, autoSkip: true, maxTicksLimit: 15 } }
+        },
+        elements: { 
+            point: { 
+                radius: 0,
+                hoverRadius: 5,
+                hoverBackgroundColor: function(context) {
+                    return context.dataset.borderColor;
+                }
+            },
+            line: { borderWidth: 2 }
+        },
+        interaction: { mode: 'index', intersect: false }
+    }
+});
+
+// AC & Other V Chart
+const acVCtx = document.getElementById('ac_vChartCanvas').getContext('2d');
+allCharts.acVChart = new Chart(acVCtx, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [
+            {
+                label: 'A/C',
+                data: [],
+                backgroundColor: 'rgba(255, 0, 255, 0.3)',
+                borderColor: 'rgba(255, 0, 255, 1)',
+                fill: true,
+                tension: 0.1
+            },
+            {
+                label: 'Other',
+                data: [],
+                backgroundColor: 'rgba(60, 225, 13, 0.3)',
+                borderColor: 'rgba(60, 225, 13, 1)',
+                fill: true,
+                tension: 0.1
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { 
+            legend: { display: false },
+            tooltip: { enabled: true, mode: 'index', intersect: false }
+        },
+        scales: {
+            y: { beginAtZero: false, min: 200, max: 250, grid: { color: gridColor }, ticks: { color: labelColor } },
+            x: { grid: { color: gridColor }, ticks: { color: labelColor, maxRotation: 0, autoSkip: true, maxTicksLimit: 15 } }
+        },
+        elements: { 
+            point: { 
+                radius: 0,
+                hoverRadius: 5,
+                hoverBackgroundColor: function(context) {
+                    return context.dataset.borderColor;
+                }
+            },
+            line: { borderWidth: 2 }
+        },
+        interaction: { mode: 'index', intersect: false }
+    }
+});
+
+// AC & Other PF Chart
+const acPFCtx = document.getElementById('ac_pfChartCanvas').getContext('2d');
+allCharts.acPFChart = new Chart(acPFCtx, {
+    type: 'bar',
+    data: {
+        labels: [],
+        datasets: [
+            {
+                label: 'A/C',
+                data: [],
+                backgroundColor: 'rgba(255, 0, 255, 1)',
+                borderColor: 'rgba(255, 0, 255, 1)',
+                borderWidth: 1
+            },
+            {
+                label: 'Other',
+                data: [],
+                backgroundColor: 'rgba(60, 225, 13, 1)',
+                borderColor: 'rgba(60, 225, 13, 1)',
+                borderWidth: 1
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: false, min: 0.8, max: 1.0, grid: { color: gridColor }, ticks: { color: labelColor } },
+            x: { grid: { color: gridColor }, ticks: { color: labelColor, maxRotation: 0, autoSkip: true, maxTicksLimit: 15 } }
+        }
+    }
+});
+
+        }); // End DOMContentLoaded
+
+
+
+            </script>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Control</title>
+    <style>
+        /* --- Global Styles & Layout (from air condition.html) --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Consistent font */
+        }
+
+        body {
+            background-color: #1e2433; /* Darker background from air condition */
+            color: white;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* --- Sidebar Styles (from air condition.html) --- */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 200px;
+            height: 100vh;
+            overflow-y: auto; /* ให้เลื่อนได้เฉพาะภายใน sidebar เมื่อเนื้อหายาวเกินไป */
+            background-color: #1e2433;
+            border-right: 1px solid #2d3445;
+            z-index: 100;
+        }
+
+        .sidebar .header { /* Header specific to sidebar */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #1e2433;
+            border-bottom: 1px solid #2d3445;
+        }
+
+         .sidebar .logo {
+            color: #3b82f6;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .sidebar .time {
+            font-size: 18px; /* Adjusted size */
+            color: white;
+        }
+
+        .nav-menu {
+            padding: 10px 0; /* Reduced padding */
+            flex-grow: 1; /* Allow menu to fill space */
+            overflow-y: auto; /* Add scroll if needed */
+        }
+
+        .nav-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            position: relative; /* Needed for absolute positioning of link */
+            display: block; /* Ensure it takes full width */
+             text-decoration: none; /* Remove underline from potential links */
+             color: white; /* Default text color */
+        }
+
+        .nav-item.active, .nav-item:hover { /* Highlight for active/hover */
+             background-color: #2d3445;
+        }
+
+         /* Specific style for links inside nav-item if needed */
+         .nav-item a {
+             text-decoration: none;
+             color: inherit; 
+             display: block; /* Make link fill the item */
+         }
+
+
+        .sub-menu {
+            padding-left: 20px;
+            display: none; /* Hide by default */
+            background-color: #1e2433; /* Slightly different background */
+        }
+
+        .sub-menu.sub-sub-menu.active-menu{
+            background-color: #1e2433;
+        }
+
+        .sub-item {
+            padding: 10px 20px;
+            font-size: 13px;
+            cursor: pointer;
+            /* transition: background-color 0.3s; */
+            background-color: #1e2433;
+            display: block; /* Ensure it takes full width */
+            text-decoration: none; /* Remove underline from potential links */
+            /* color: #bdc3c7;  */
+        }
+
+        .sub-item:hover {
+            background-color: #3c4357;
+             color: white;
+        }
+         .sub-item.active { /* Style for active sub-item */
+             background-color: #34495e;
+             color: white;
+             font-weight: bold;
+         }
+
+
+        .sub-sub-menu {
+            padding-left: 20px;
+             background-color: rgba(45, 52, 69, 0.5);  
+        }
+
+        /* Dropdown icons */
+        .dropdown-icon {
+            float: right; /* Position icon to the right */
+             margin-left: 5px;
+            transition: transform 0.3s;
+            font-size: 0.8em; /* Smaller icon */
+        }
+
+        .active-menu { /* Class to show submenus */
+            display: block !important;
+        }
+
+         .nav-item.active .dropdown-icon { /* Rotate icon when parent is active and has submenu */
+             transform: rotate(180deg);
+         }
+
+
+        /* --- Main Content Styles (from air condition.html) --- */
+        .main-content {
+            flex: 1;
+            background-color: #2d3445; /* Main content background */
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            margin-left: 200px;
+
+        }
+
+        .main-content .header { /* Header for main content */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #1e2433; /* Match sidebar header */
+            border-bottom: 1px solid #2d3445;
+            flex-shrink: 0; /* Prevent header from shrinking */
+        }
+
+        .search-bar {
+            flex-grow: 1;
+            margin: 0 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            max-width: 300px;
+            padding: 8px 15px 8px 40px; /* Adjusted padding */
+            border-radius: 25px;
+            border: none;
+            background-color: #2d3445;
+            color: white;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="gray" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>');
+            background-repeat: no-repeat;
+            background-position: 15px center;
+            outline: none;
+        }
+
+        .tools {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #bdc3c7; /* Icon/tool color */
+        }
+         .tool-icon{
+             cursor: pointer;
+         }
+         .tool-icon:hover{
+             color: white;
+         }
+
+        .time-filter {
+            display: flex;
+            align-items: center;
+            background-color: #2d3445;
+            padding: 6px 15px;
+            border-radius: 5px;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .time-icon {
+            color: gray;
+        }
+
+        .language-selector {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .flag {
+            width: 24px;
+            height: 16px;
+            display: inline-block; /* Added */
+             vertical-align: middle; /* Added */
+        }
+
+        /* --- Content Area for Stages (Adapted from Event2.html) --- */
+         .content-wrapper {
+            padding: 20px; /* Add padding around the stages panel */
+            flex-grow: 1; /* Allow wrapper to fill remaining space */
+            overflow-y: auto; /* Add scroll if stages exceed height */
+         }
+
+        .stages-panel { /* Renamed from .main-container */
+            background-color: #1e2433; /* Original background */
+            padding: 20px;
+            border-radius: 8px;
+            width: 100%; /* Take full width of parent */
+            /* Removed position:relative, left, max-width */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+             margin: 0 auto; /* Center if needed, though width:100% should fill */
+             max-width: 1300px; /* Optional: constrain max width */
+        }
+
+        .header-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px  /* Use consistent dark color */
+        }
+
+        .tab {
+            background-color: #1e2433;
+            position: relative;
+            top: 20px;
+            left: auto;
+            color: #bdc3c7;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 1.1em;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+            outline: none;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .tab.active {
+            background-color: #2c3e50; /* Match panel background */
+            color: #ffffff;
+            border: 2px ;
+            border-left: 1px solid #566573 ;
+            border-top: 1px solid #566573 ;
+            border-right: 1px solid #566573 ;
+            font-size: 0.9em;
+            /* border-bottom: 3px solid #9bc2e9; */
+            position: relative;
+            top: 20px;
+            left: auto;
+        }
+
+        .tab.active:hover {
+            background-color: #6c7a89;
+            color: #ffffff;
+        }
+         .tab:not(.active):hover {
+             background-color: #6c7a89;
+             color: white;
+         }
+
+        #stages-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .stage {
+            background-color: #2c3e50; /* Darker stage background */
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #566573;
+            transition: opacity 0.3s;
+        }
+
+        .stage.disabled {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* Allow interaction with specific buttons even when disabled */
+        .stage.disabled .stage-actions button {
+             pointer-events: auto;
+             opacity: 1;
+        }
+
+        .stage-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .stage-title {
+            margin: 0;
+            font-size: 1.4em;
+            flex-grow: 1;
+            color: #ecf0f1; /* Ensure title text is light */
+        }
+
+        .time-control {
+            position: relative;
+            right: 25%;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #34495e;
+            padding: 5px 10px;
+            border-radius: 4px;
+            
+        }
+
+        .time-control label {
+            font-weight: bold;
+            color: #bdc3c7; /* Lighter label color */
+        }
+
+        .time-input {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            border: 1px solid #566573;
+            border-radius: 4px;
+            padding: 5px 8px;
+            width: 60px;
+            text-align: center;
+            font-size: 1.1em;
+            outline: none;
+        }
+        .time-input:focus {
+             border-color: #3498db; /* Highlight on focus */
+        }
+
+        .save-time-button {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s ease;
+        }
+        .save-time-button:hover { background-color: #2ecc71; }
+
+        .stage-actions { display: flex; gap: 5px; }
+        .stage-actions button {
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s ease, opacity 0.2s ease;
+        }
+
+        .enable-button { background-color: #3498db; color: white; }
+        .enable-button:hover { background-color: #5dade2; }
+        .enable-button.active { box-shadow: 0 0 5px rgba(52, 152, 219, 0.7); }
+
+        .disable-button { background-color: #95a5a6; color: #34495e; }
+        .disable-button:hover { background-color: #bdc3c7; }
+        .disable-button.active {
+            background-color: #7f8c8d;
+            color: white;
+            box-shadow: 0 0 5px rgba(127, 140, 141, 0.7);
+        }
+
+        .delete-button { background-color: #e74c3c; color: white; }
+        .delete-button:hover { background-color: #ec7063; }
+
+        .reset-button { background-color: #f39c12; color: white; }
+        .reset-button:hover { background-color: #f1c40f; }
+
+        .device-control {
+            background-color: #34495e;
+            padding: 15px;
+            border-radius: 6px;
+             margin-top: 15px; /* Added margin */
+        }
+
+        .device-control h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #566573;
+            padding-bottom: 5px;
+            color: #ecf0f1; /* Ensure heading is light */
+        }
+
+        .ahu-buttons { display: flex; flex-wrap: wrap; gap: 10px; }
+        .ahu-button {
+            background-color: #6c757d; /* OFF state */
+            color: #ecf0f1;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.2s ease;
+            flex-grow: 1;
+            text-align: center;
+        }
+        .ahu-button.active { background-color: #ff4d00; color: #2c3e50; } /* ON state */
+        .ahu-button:hover:not(.active) { background-color: #7f8c8d; }
+        .ahu-button.active:hover { background-color: #f39782; }
+
+
+        .add-button { /* Main Add Stage button */
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1.1em;
+            display: block;
+            width: fit-content; /* Adjust width */
+            margin: 20px 0 0 auto; /* Align to the right */
+            transition: background-color 0.2s ease;
+        }
+        .add-button:hover { background-color: #2ecc71; }
+
+         /* Responsive */
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+            .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #2d3445; }
+            .main-content .header { flex-wrap: wrap; gap: 10px; }
+            .search-bar { margin: 0; }
+             .content-wrapper { padding: 10px; }
+             .stages-panel { padding: 15px; }
+             .stage-header { flex-direction: column; align-items: stretch; }
+             .stage-actions { justify-content: flex-end; }
+             .add-button { margin: 20px auto; } /* Center button on small screens */
+        }
+
+
+        .aaaa1 {
+      padding: px 20px;
+      position: relative;
+      color: #ffffff;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+      text-decoration: none;
+    }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="header">
+                 <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAMESURBVHhe7ZxNbtswDIVPhK+eIukJmk4QOkHZCboOAnWCujdJOkncDugkVSeoM7Ahu4I/fYKASJEsy9t9EAh/NEBCiH98HgxGRAghxG8RxhgZY5w7fwdmPu3kMg/QNC0tLCzsQcQ81J9QRh2X02B/lx84t6m7p5aTnMz7S/dP77sMSt4nAo1Gw5dL909DkqSgXC6v7c9X44p73W73uGmaZs7K5fLCzWYzy0AgEGC5XL58Pq/nJ0uSyuVylmVZHv0zQghHjPERapqm87PZbAII8nypVIoY4wOBwIEQQtg1bY9pmo/U6XTs9fS877k8nFvKqhhja+MGxhgnIYTJsiwpy5L8sS5Lctb1fTTGCMHAzQ3m3hLjXAMjRkdp63neGGMul0vYd+vX5vOR373F+UqgVCpRhCAI8zBGIpEYhBBCkGU5jDGxLMtpmmZGfWGMcaPRqIQQ/B+MMRzHQQjyPBRFPBHFEEXxRywW6/5hHCKEcBwOsVKpZDab/V3Lsuj5+fOAr5a+8Dyf7Xa7Xq9n//3xYDCwzWbDx3/f849wONzxPS+VSm3z+YypVKrd4zh++4/iE6TZbP7bKpWK9/2q55g3qG/cK88c80Z8PkvjE+SWL5dL2BjjpFBK9/c0TbP/q4bxeDyVSgW+hBBm75yFLMumOI73+/0SCAQEQRAAUBQFURTz+XxeLBZfLpdzPB6PxeLhy4mJyVgslsfj8X+PbhAECIRQz/MYY5IkAaDIaDQqCIIYDAaUUkop3vt+v99dnmf+a5rWbDaT7fQ2h7Y7hBBxHL+aB+8NkqT3+z28v/d19X/f923nuz+VSq2/t9+0fL//7R/N/3L4zJmfn5+e/fF+v//T19+u76dSynk8HpRSUsq7ffvMhQsX/v89Hn//w4cPz+fzF6599/1p+5t62Gg0/P79++eff/6870+sP/76T7/wYDB41/V9KpHIWywW8/sB/CslJSX/D+j7R0qj4/C3AAAAAElFTkSuQmCC" alt="RST Logo" style="height: 30px; vertical-align: middle;">
+                 <!-- <div class="time">06:15 PM</div>  -->
+            </div>
+            <div class="nav-menu">
+                <div class="nav-item">Dashboard</div>
+                <div class="nav-item active">Event</div> 
+                <div class="nav-item">Overview</div>
+                <div class="nav-item "><a href="{{ url_for('device_control') }}" class="aaaa1">Device Control</a></div> 
+                <div class="nav-item" onclick="toggleMenu('report-menu')">
+                  Report <span class="dropdown-icon">▼</span>
+                </div>
+                 <div class="sub-menu" id="report-menu">
+                     <!-- <div class="sub-item" onclick="toggleMenu('mdb-menu')">
+                         MDB <span class="dropdown-icon">▼</span>
+                     </div> -->
+                     <!-- <div class="sub-menu sub-sub-menu" id="mdb-menu"> -->
+                        <div class="sub-item"><a href="{{ url_for('solar_import') }}" class="aaaa1">Solar & import</a></div>
+                    <!-- </div> -->
+                     <!-- <div class="sub-item"><a href="AC and Other.html" class="aaaa1">A/C & Other</a></div> -->
+                     <div class="sub-item" ><a href="{{ url_for('air_condition') }}" class="aaaa1">Air condition  </a></div>
+                     <div class="sub-item"><a href="{{ url_for('power_meter') }}" class="aaaa1">Power meter </a></div>
+                     <div class="sub-item"><a href="{{ url_for('iaq') }}" class="aaaa1">IAQ Sensor</a></div>
+                     <div class="sub-item"><a href="{{ url_for('people_counting') }}" class="aaaa1">Camera</a></div>
+                    </div>
+                <div class="nav-item">Settings</div>
+                <div class="nav-item">Logout</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                 <div class="search-bar">
+                     <input type="text" class="search-input" placeholder="Search">
+                 </div>
+                 <div class="tools">
+                     <div class="time-filter">
+                         <span class="time-icon">⏱</span>
+                         <span>Last 6 hours</span>
+                         <span>▼</span>
+                     </div>
+                     <!-- <div class="tool-icon">🔍</div>
+                     <div class="tool-icon">🔄</div>
+                     <div class="tool-icon">✓</div>
+                     <div class="tool-icon">^</div>
+                     <div class="language-selector">
+                          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAPCAMAAADJmq04AAAAQlBMVEUAVIcAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4fm09gPAAAAFXRSTlMAYGFfQJ+fr79/P39/v0CAv59/f6A+f5iWAAAAR0lEQVR42pWOWQ6AMAgDXeLu/4v3tBWHJO/+N+gYEEBqKj7+C1HkRJHlsbq/N6+g5LIGW9Kz9LpD6SU4qLh1z5k+wAMmQgJLv56KygAAAABJRU5ErkJggg==" alt="UK Flag" class="flag">
+                         <span>English</span>
+                         <span>▼</span>
+                     </div> -->
+                 </div>
+             </div>
+ 
+             <div class="content-wrapper">
+                <div class="stages-panel">
+                    <div class="header-tabs">
+                        <button class="tab"><a href="{{ url_for('home') }}" class="aaaa1"><h2>Soft Start</h2></a></button>
+                        <button class="tab active"><h2>Soft Stop</h2></button>
+                    </div>
+
+                    <div id="stages-container">
+                        </div>
+
+                    <button id="add-stage-button" class="add-button">Add</button>
+                </div>
+             </div>
+
+        </div></div><template id="stage-template">
+        <div class="stage" data-stage-id="">
+            <div class="stage-header">
+                <h2 class="stage-title">Stage XX</h2>
+                <div class="time-control">
+                    <label>Time</label>
+                    <input type="text" class="time-input" value="08:00" pattern="[0-9]{2}:[0-9]{2}" placeholder="HH:MM">
+                    <button class="save-time-button">Save</button>
+                </div>
+                <div class="stage-actions">
+                    <button class="enable-button active">Enable</button>
+                    <button class="disable-button">Disable</button>
+                    <button class="delete-button">Delete</button>
+                    <button class="reset-button">Reset</button>
+                </div>
+            </div>
+            <div class="device-control">
+                <h3>Device</h3>
+                <div class="ahu-buttons">
+                    <button class="ahu-button" data-ahu-id="1">AHU 01</button>
+                    <button class="ahu-button" data-ahu-id="2">AHU 02</button>
+                    <button class="ahu-button" data-ahu-id="3">AHU 03</button>
+                    <button class="ahu-button" data-ahu-id="4">AHU 04</button>
+                    <button class="ahu-button" data-ahu-id="5">AHU 05</button>
+                    <button class="ahu-button" data-ahu-id="6">AHU 06</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script>
+       // --- Function to toggle menu display (from air condition.html) ---
+ // Function to toggle menu display
+ function toggleMenu(menuId) {
+      const menu = document.getElementById(menuId);
+      if (menu) {
+        menu.classList.toggle('active-menu');
+      }
+    }
+// --- Stage Management Script with LocalStorage Persistence ---
+document.addEventListener('DOMContentLoaded', () => {
+    const stagesContainer = document.getElementById('stages-container');
+    const addStageButton = document.getElementById('add-stage-button');
+    const stageTemplate = document.getElementById('stage-template');
+    const storageKey = 'softStopStages'; // Key for localStorage
+
+    let stageData = []; // Array to hold the state of all stages
+    let nextStageId = 1;
+    let deletedStageIds = [];
+
+    // --- Function to Save Current Stages State to LocalStorage ---
+    function saveStagesState() {
+        const currentStages = stagesContainer.querySelectorAll('.stage');
+        stageData = []; // Reset current data
+        currentStages.forEach(stageElement => {
+            const stageId = parseInt(stageElement.dataset.stageId, 10);
+            const timeInput = stageElement.querySelector('.time-input');
+            const isEnabled = !stageElement.classList.contains('disabled');
+            const ahuButtons = stageElement.querySelectorAll('.ahu-button');
+            const ahuStates = {};
+            ahuButtons.forEach(btn => {
+                ahuStates[btn.dataset.ahuId] = btn.classList.contains('active');
+            });
+
+            stageData.push({
+                id: stageId,
+                time: timeInput.value,
+                enabled: isEnabled,
+                ahu: ahuStates
+            });
+        });
+
+        // Sort data by ID before saving (important for consistency)
+        stageData.sort((a, b) => a.id - b.id);
+
+        // Save to localStorage
+        try {
+             // Include nextStageId and deletedStageIds in the saved object
+             const dataToSave = {
+                 stages: stageData,
+                 nextId: nextStageId,
+                 deletedIds: deletedStageIds
+             };
+            localStorage.setItem(storageKey, JSON.stringify(dataToSave));
+            console.log('Stages state saved.');
+        } catch (e) {
+            console.error('Error saving stages state to localStorage:', e);
+            // Handle potential storage errors (e.g., quota exceeded)
+        }
+    }
+
+    // --- Function to Render a Single Stage from Data ---
+    function renderStage(data) {
+        console.log(`Rendering Stage ${data.id}`);
+        const templateContent = stageTemplate.content.cloneNode(true);
+        const newStageElement = templateContent.querySelector('.stage');
+
+        // Set data from loaded object
+        newStageElement.dataset.stageId = data.id;
+        newStageElement.querySelector('.stage-title').textContent = `Stage ${String(data.id).padStart(2, '0')}`;
+        newStageElement.querySelector('.time-input').value = data.time || "08:00"; // Default time if not set
+
+        // Set Enable/Disable state
+        toggleStageState(newStageElement, data.enabled, false); // Pass 'false' to prevent immediate saving
+
+        // Set AHU button states
+        const ahuButtons = newStageElement.querySelectorAll('.ahu-button');
+        ahuButtons.forEach(btn => {
+            const ahuId = btn.dataset.ahuId;
+            if (data.ahu && data.ahu[ahuId]) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        // Add listeners
+        setupStageListeners(newStageElement);
+
+        // Append to container (logic ensures correct order later in loadStagesState)
+        return newStageElement;
+    }
+
+
+    // --- Function to Load Stages State from LocalStorage ---
+    function loadStagesState() {
+        try {
+            const savedDataString = localStorage.getItem(storageKey);
+            if (savedDataString) {
+                const savedData = JSON.parse(savedDataString);
+                console.log('Loaded stages state:', savedData);
+
+                 // Restore state variables
+                 stageData = savedData.stages || [];
+                 nextStageId = savedData.nextId || 1;
+                 deletedStageIds = savedData.deletedIds || [];
+
+
+                 // Clear current stages before loading
+                 stagesContainer.innerHTML = '';
+
+                 // Render stages from loaded data in sorted order
+                 stageData.sort((a, b) => a.id - b.id).forEach(data => {
+                     const stageElement = renderStage(data);
+                     stagesContainer.appendChild(stageElement);
+                 });
+
+                 // If no stages were loaded (e.g., empty array saved), add the default one
+                 if (stageData.length === 0) {
+                    console.log("No stages found in storage, adding default Stage 1.");
+                    addStage(true); // Pass true to indicate initial add without save
+                 }
+
+                 // Make sure nextStageId is at least the max loaded ID + 1 if no deleted IDs
+                 if (deletedStageIds.length === 0 && stageData.length > 0) {
+                     const maxId = Math.max(...stageData.map(s => s.id));
+                     nextStageId = Math.max(nextStageId, maxId + 1);
+                 }
+
+
+            } else {
+                console.log('No saved state found, adding default Stage 1.');
+                addStage(true); // Pass true to indicate initial add without save
+            }
+        } catch (e) {
+            console.error('Error loading stages state from localStorage:', e);
+            // If loading fails, start fresh
+             stagesContainer.innerHTML = '';
+            addStage(true); // Add default stage
+        }
+    }
+
+    // --- Modified setupStageListeners (no changes needed here, saving happens in handlers) ---
+     function setupStageListeners(stageElement) {
+        const stageId = stageElement.dataset.stageId;
+        const enableButton = stageElement.querySelector('.enable-button');
+        const disableButton = stageElement.querySelector('.disable-button');
+        const deleteButton = stageElement.querySelector('.delete-button');
+        const resetButton = stageElement.querySelector('.reset-button');
+        const timeInput = stageElement.querySelector('.time-input');
+        const saveTimeButton = stageElement.querySelector('.save-time-button');
+        const ahuButtons = stageElement.querySelectorAll('.ahu-button');
+
+        ahuButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                toggleAhuButton(button);
+                saveStagesState(); // Save state after toggle
+            });
+        });
+        enableButton.addEventListener('click', () => toggleStageState(stageElement, true)); // Save happens within toggleStageState
+        disableButton.addEventListener('click', () => toggleStageState(stageElement, false)); // Save happens within toggleStageState
+        deleteButton.addEventListener('click', () => deleteStage(stageElement)); // Save happens within deleteStage
+        resetButton.addEventListener('click', () => resetStage(stageElement)); // Save happens within resetStage
+
+        saveTimeButton.addEventListener('click', () => {
+            if (/^[0-2][0-9]:[0-5][0-9]$/.test(timeInput.value)) {
+                console.log(`Stage ${stageId} Time Saved: ${timeInput.value}`);
+                alert(`Stage ${stageId} Time Saved: ${timeInput.value}`);
+                saveStagesState(); // Save state after saving time
+            } else {
+                alert('Invalid time format. Please use HH:MM (e.g., 08:30)');
+                timeInput.focus();
+            }
+        });
+    }
+
+    // --- Modified toggleAhuButton (Removed save call, moved to listener) ---
+    function toggleAhuButton(button) {
+        button.classList.toggle('active');
+        console.log(`AHU ${button.dataset.ahuId} toggled in Stage ${button.closest('.stage').dataset.stageId}. New state: ${button.classList.contains('active') ? 'ON' : 'OFF'}`);
+        // Save state is called in the event listener
+    }
+
+    // --- Modified toggleStageState (Added save call) ---
+     function toggleStageState(stageElement, isEnabled, shouldSave = true) { // Added shouldSave flag
+         const enableButton = stageElement.querySelector('.enable-button');
+         const disableButton = stageElement.querySelector('.disable-button');
+
+        if (isEnabled) {
+            stageElement.classList.remove('disabled');
+            enableButton.classList.add('active');
+            disableButton.classList.remove('active');
+             console.log(`Stage ${stageElement.dataset.stageId} Enabled.`);
+        } else {
+            stageElement.classList.add('disabled');
+            enableButton.classList.remove('active');
+            disableButton.classList.add('active');
+             console.log(`Stage ${stageElement.dataset.stageId} Disabled.`);
+        }
+         if (shouldSave) { // Only save if not called during initial load
+             saveStagesState();
+         }
+    }
+
+
+    // --- Modified deleteStage (Added save call) ---
+    function deleteStage(stageElement) {
+        const stageId = parseInt(stageElement.dataset.stageId, 10);
+        console.log(`Deleting Stage ${stageId}`);
+        stageElement.remove();
+        // Only add to deleted list if it's not already there
+        if (!deletedStageIds.includes(stageId)) {
+            deletedStageIds.push(stageId);
+            deletedStageIds.sort((a, b) => a - b);
+        }
+        saveStagesState(); // Save state after deleting
+    }
+
+    // --- Modified resetStage (Added save call) ---
+    function resetStage(stageElement) {
+        const stageId = stageElement.dataset.stageId;
+        console.log(`Resetting Stage ${stageId}`);
+        const timeInput = stageElement.querySelector('.time-input');
+        timeInput.value = "08:00";
+        const ahuButtons = stageElement.querySelectorAll('.ahu-button');
+        ahuButtons.forEach(button => button.classList.remove('active'));
+        toggleStageState(stageElement, true, false); // Reset to enabled, prevent immediate save
+        alert(`Stage ${stageId} has been reset.`);
+        saveStagesState(); // Save state after resetting
+    }
+
+    // --- Modified addStage Function ---
+    function addStage(isInitialAdd = false) { // Added flag for initial load
+        let newStageId;
+
+        // Determine the ID for the new stage
+        if (deletedStageIds.length > 0) {
+            newStageId = deletedStageIds.shift(); // Reuse the smallest deleted ID
+        } else {
+            newStageId = nextStageId++; // Use the next sequential ID
+        }
+
+        console.log(`Adding Stage ${newStageId}`);
+
+        // Create stage data object for rendering
+        const newStageData = {
+            id: newStageId,
+            time: "08:00", // Default time
+            enabled: true, // Default state
+            ahu: {} // Default empty AHU states
+        };
+
+        // Render the new stage
+        const newStageElement = renderStage(newStageData);
+
+         // --- Insertion Logic (Try to keep order) ---
+         let inserted = false;
+         const existingStages = stagesContainer.querySelectorAll('.stage');
+         for (let i = 0; i < existingStages.length; i++) {
+             const existingStageId = parseInt(existingStages[i].dataset.stageId, 10);
+             if (newStageId < existingStageId) {
+                 stagesContainer.insertBefore(newStageElement, existingStages[i]);
+                 inserted = true;
+                 break;
+             }
+         }
+         // If not inserted (either it's the highest ID or container is empty), append it
+         if (!inserted) {
+             stagesContainer.appendChild(newStageElement);
+         }
+
+        // Save state only if it's not the initial load triggered by loadStagesState
+        if (!isInitialAdd) {
+            saveStagesState();
+        }
+    }
+
+
+    // --- Event Listener for the Main Add Button ---
+    addStageButton.addEventListener('click', () => addStage(false)); // Pass false for manual add
+
+    // --- Initial Setup ---
+    loadStagesState(); // Load saved state OR add the default stage
+
+});
+    </script>
+</body>
+</html>

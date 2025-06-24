@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scheduler</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/event.js') }}"></script>
+    <style>
+        /* === Scheduler Page Styles === */
+
+.scheduler-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* --- การ์ดของแต่ละ Stage --- */
+.stage-card {
+    background-color: var(--bg-medium);
+    border-radius: 8px;
+    margin: 20px;
+    padding: 20px 25px;
+    border: 1px solid #4a627a;
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.stage-card:hover {
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.2);
+}
+
+/* --- ส่วนหัวของการ์ด --- */
+.stage-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #4a627a;
+}
+
+.stage-title {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: var(--text-light);
+}
+
+.stage-controls .stage-btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 10px;
+    font-weight: bold;
+    transition: opacity 0.2s ease-in-out, transform 0.1s ease-in-out;
+}
+.stage-controls .stage-btn:active {
+    transform: scale(0.95);
+}
+
+.stage-controls .stage-enable { background-color: var(--accent-blue); color: white; }
+.stage-controls .stage-disable { background-color: #6c757d; color: white; }
+.stage-controls .stage-delete { background-color: var(--accent-red); color: white; }
+
+/* ทำให้ปุ่ม Enable/Disable ที่ไม่ถูกเลือกดูจางลง */
+.stage-controls .stage-btn:not(.active) {
+    opacity: 0.4;
+}
+
+/* --- ส่วนเนื้อหาของการ์ด --- */
+.stage-body {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.time-setter, .device-setter {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.time-setter label, .device-setter label {
+    width: 70px;
+    font-weight: 500;
+    font-size: 1rem;
+    color: var(--text-dark);
+}
+
+/* --- ช่องกรอกเวลา --- */
+.time-inputs {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.time-inputs input {
+    width: 70px;
+    padding: 10px;
+    text-align: center;
+    background-color: var(--bg-dark);
+    border: 1px solid var(--bg-light);
+    color: var(--text-light);
+    font-size: 1.5rem;
+    font-weight: bold;
+    border-radius: 5px;
+}
+.time-inputs input:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+}
+
+.time-inputs span {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--text-dark);
+    padding-bottom: 4px;
+}
+
+/* --- ปุ่มเลือกอุปกรณ์ --- */
+.device-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.device-buttons .device-btn {
+    padding: 8px 16px;
+    border: 1px solid var(--accent-blue);
+    background-color: transparent;
+    color: var(--accent-blue);
+    border-radius: 20px; /* ทำให้ปุ่มเป็นทรงแคปซูล */
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.device-buttons .device-btn:hover {
+    background-color: rgba(52, 152, 219, 0.1);
+}
+
+.device-buttons .device-btn.active {
+    background-color: var(--accent-blue);
+    color: white;
+}
+
+/* --- ปุ่ม Add และ Save --- */
+.add-stage-container {
+    padding-top: 10px;
+    display: flex;
+    justify-content: flex-end; /* จัดปุ่มไปทางขวา */
+    gap: 15px;
+}
+
+.add-stage-btn, .save-schedule-btn {
+    padding: 12px 30px;
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+.add-stage-btn {
+    background-color: var(--accent-green);
+}
+.add-stage-btn:hover {
+    background-color: #2ecc71;
+}
+.save-schedule-btn {
+    background-color: var(--accent-blue);
+}
+.save-schedule-btn:hover {
+    background-color: #4b9fea;
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="logo">RST</div>
+            <nav>
+                <ul>
+                    <li>Dashboard</li>
+                    <li><a href="{{ url_for('schedule') }}">Event</a></li>
+                    <li>Overview</li>
+                    <li ><a href="{{ url_for('index') }}">Device Control</a></li>
+                    <li>Report</li>
+                    <li><a href="{{ url_for('settings') }}">Settings</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <header class="main-header">
+                <div class="tabs">
+                    <button class="tab-button active" data-type="soft_start">Soft Start</button> 
+                    <button class="tab-button" data-type="soft_stop">Soft Stop</button> 
+                </div>
+                <div id="time-display" class="time-display">Time</div> 
+            </header>
+            
+            <section class="scheduler-content">
+                <div id="stages-container">
+                    {% if not schedules %}
+                    <div class="stage-card" data-stage-id="new-1">
+                        <div class="stage-header">
+                            <h3 class="stage-title">Stage 01</h3>
+                            <div class="stage-controls">
+                                <button class="stage-btn stage-enable active">Enable</button>
+                                <button class="stage-btn stage-disable">disable</button>
+                                <button class="stage-btn stage-delete">Delete</button>
+                            </div>
+                        </div>
+                        <div class="stage-body">
+                            <div class="time-setter">
+                                <label>Time</label>
+                                <div class="time-inputs">
+                                    <input class="time-hour" type="number" value="08" min="0" max="23">
+                                    <span>:</span>
+                                    <input class="time-minute" type="number" value="00" min="0" max="59">
+                                </div>
+                            </div>
+                            <div class="device-setter">
+                                <label>Device</label>
+                                <div class="device-buttons">
+                                    {% for i in range(1, 7) %}
+                                    <button class="device-btn" data-ahu-id="{{ i }}">AHU {{ '%02d'|format(i) }}</button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% for stage in schedules %}
+                    <div class="stage-card" data-stage-id="{{ stage._id }}">
+                        <div class="stage-header">
+                            <h3 class="stage-title">Stage {{ '%02d'|format(loop.index) }}</h3>
+                            <div class="stage-controls">
+                                <button class="stage-btn stage-enable {% if stage.is_enabled %}active{% endif %}">Enable</button>
+                                <button class="stage-btn stage-disable {% if not stage.is_enabled %}active{% endif %}">disable</button>
+                                <button class="stage-btn stage-delete">Delete</button>
+                            </div>
+                        </div>
+                        <div class="stage-body">
+                            <div class="time-setter">
+                                <label>Time</label>
+                                <div class="time-inputs">
+                                    <input class="time-hour" type="number" value="{{ '%02d'|format(stage.time_hour) }}" min="0" max="23">
+                                    <span>:</span>
+                                    <input class="time-minute" type="number" value="{{ '%02d'|format(stage.time_minute) }}" min="0" max="59">
+                                </div>
+                            </div>
+                            <div class="device-setter">
+                                <label>Device</label>
+                                <div class="device-buttons">
+                                    {% for i in range(1, 7) %}
+                                    <button class="device-btn {% if i in stage.devices %}active{% endif %}" data-ahu-id="{{ i }}">AHU {{ '%02d'|format(i) }}</button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="add-stage-container">
+                    <button id="add-stage-btn" class="add-stage-btn">Add</button>
+                    <button id="save-schedule-btn" class="save-schedule-btn">Save Schedule</button>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="{{ url_for('static', filename='js/schedule.js') }}"></script>
+</body>
+</html>

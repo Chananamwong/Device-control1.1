@@ -1,0 +1,601 @@
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #1e2433;
+      color: white;
+    }
+
+    .container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 200px;
+      background-color: #1e2433;
+      border-right: 1px solid #2d3445;
+    }
+
+    .main-content {
+      flex: 1;
+      background-color: #2d3445;
+      padding: 0;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      background-color: #1e2433;
+      border-bottom: 1px solid #2d3445;
+    }
+
+    .logo {
+      color: #3b82f6;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .time {
+      font-size: 18px;
+      color: white;
+    }
+
+    .search-bar {
+      flex-grow: 1;
+      margin: 0 20px;
+    }
+
+    .search-input {
+      width: 100%;
+      max-width: 300px;
+      padding: 8px 40px;
+      border-radius: 25px;
+      border: none;
+      background-color: #2d3445;
+      color: white;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="gray" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>');
+      background-repeat: no-repeat;
+      background-position: 15px center;
+    }
+
+    .tools {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .time-filter {
+      display: flex;
+      align-items: center;
+      background-color: #2d3445;
+      padding: 6px 15px;
+      border-radius: 5px;
+      gap: 5px;
+    }
+
+    .time-icon {
+      color: gray;
+    }
+
+    .language-selector {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .flag {
+      width: 24px;
+      height: 16px;
+    }
+
+    .nav-menu {
+      padding: 10px 0; /* Reduced padding */
+      flex-grow: 1; /* Allow menu to fill space */
+      overflow-y: auto; /* Add scroll if needed */
+    }
+
+    .nav-item {
+      padding: 12px 20px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+    }
+
+    .nav-item.active{
+      background-color: #2d3445;
+    }
+
+    .nav-item:hover {
+      background-color: #2d3445;
+    }
+
+    .sub-menu {
+      padding-left: 20px;
+      display: none;
+    }
+
+    .sub-item {
+      padding: 10px 20px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .sub-item:hover {
+      background-color: #3c4357;
+    }
+
+    .sub-sub-menu {
+      padding-left: 20px;
+    }
+
+    .show {
+      display: block;
+    }
+
+    .tabs {
+      display: flex;
+      padding: 20px 20px 0;
+      gap: 15px;
+      border-bottom: 1px solid #2d3445;
+    }
+
+    .tab {
+      padding: 15px 25px;
+      background-color: #3c4357;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      min-width: 120px;
+      text-align: center;
+      transition: all 0.3s;
+    }
+
+    .tab:hover {
+      background-color: #4b5563;
+    }
+
+    .tab.active {
+      background-color: #1e2433;
+      color: #ffffff;
+      font-weight: 500;
+      text-decoration: none;
+    }
+
+    .tab-content {
+      padding: 20px;
+      background-color: #1e2433;
+      border-radius: 0 0 8px 8px;
+      margin: 0 20px 20px;
+      min-height: 500px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 15px;
+      text-align: center;
+      border: 1px solid #3c4357;
+    }
+
+    th {
+      background-color: #3c4357;
+      font-weight: 500;
+    }
+
+    tr {
+      background-color: #2d3445;
+      transition: background-color 0.3s;
+    }
+
+    tr:hover {
+      background-color: #3c4357;
+    }
+
+    .dropdown-icon {
+      float: right; /* Position icon to the right */
+      margin-left: 5px;
+      transition: transform 0.3s;
+      font-size: 0.8em; /* Smaller icon */
+    }
+
+    .active-menu .dropdown-icon {
+      transform: rotate(180deg);
+    }
+
+    /* Controls Section */
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+      padding: 20px 0;
+    }
+
+    .control-unit {
+      background-color: #2d3445;
+      border-radius: 8px;
+      padding: 15px;
+      transition: all 0.3s;
+    }
+
+    .control-unit:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .control-unit.active {
+      border: 2px solid #3b82f6;
+    }
+
+    .control-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      align-items: center;
+    }
+
+    .control-title {
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .control-options {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .auto-button {
+      background-color: #10b981;
+      color: white;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 12px;
+    }
+
+    .manual-button {
+      background-color: transparent;
+      color: white;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 12px;
+      border: 1px solid #4b5563;
+    }
+
+    .power-button {
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      background-color: #10b981;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 5px;
+      cursor: pointer;
+      color: white;
+      transition: background-color 0.3s;
+    }
+
+    .power-button.off {
+      background-color: #ef4444;
+    }
+
+    .temperature-display {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      margin: 15px 0;
+    }
+
+    .temp-control {
+      width: 30px;
+      height: 30px;
+      background-color: #3b82f6;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .temp-control:hover {
+      background-color: #2563eb;
+    }
+
+    .temp-display {
+      width: 80px;
+      height: 80px;
+      background-color: #2d3445;
+      border: 2px solid #3b82f6;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .mode-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+
+    .mode-button {
+      background-color: #3b82f6;
+      color: white;
+      padding: 8px;
+      text-align: center;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .mode-button:hover {
+      background-color: #6a83ba;
+    }
+
+    .mode-button.active {
+        background-color: #3b82f6;
+        color: white;
+      }
+      
+      .mode-button.inactive {
+        background-color: #4b5563;
+        color: white;
+      }
+
+    .fan-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 5px;
+      margin-bottom: 15px;
+    }
+
+    .fan-button {
+      background-color: #4b5563;
+      color: white;
+      padding: 8px;
+      text-align: center;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .fan-button:hover {
+      background-color: #3b82f6;
+    }
+
+    .fan-button.active {
+      background-color: #3b82f6;
+    }
+
+    .aaaa {
+      padding: 12px 20px;
+      position: relative;
+      /* right: 20px; */
+      color: #ffffff;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+      text-decoration: none;
+    }
+
+    .aaaa1 {
+      padding: 12px 20px;
+      position: relative;
+      right: 20px;
+      /* right: 20px; */
+      color: #ffffff;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+      text-decoration: none;
+    }
+
+    .aaaa2 {
+      padding: 12px 20px;
+      position: relative;
+      right: 20px;
+      color: #ffffff;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+      text-decoration: none;
+    }
+
+    .status-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      margin-top: 5px;
+      color: #a0aec0;
+    }
+
+    .footer-buttons {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #a0aec0;
+    }
+
+    /* Responsive design */
+    @media (max-width: 1200px) {
+      .controls {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+      
+      .sidebar {
+        width: 100%;
+      }
+      
+      .tabs {
+        overflow-x: auto;
+        padding-bottom: 10px;
+      }
+      
+      .tab {
+        min-width: 100px;
+        padding: 10px 15px;
+      }
+    }
+
+  /*css โซล่าเซลล์---------------------------------------------------------------------------------------------------------*/
+  .solar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .solar-card {
+            background-color: #2d3445;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .solar-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        .solar-icon {
+            background-color: rgba(251, 191, 36, 0.1);
+        }
+
+        .import-icon {
+            background-color: rgba(16, 185, 129, 0.1);
+        }
+
+        .export-icon {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .consumption-icon {
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #a0aec0;
+        }
+
+        .card-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 10px 0 5px;
+        }
+
+        .card-unit {
+            font-size: 16px;
+            color: #a0aec0;
+            margin-bottom: 15px;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            background-color: #1e2433;
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #a0aec0;
+        }
+
+        /* Border colors */
+        .solar-border {
+            border-top: 4px solid #fbbf24;
+        }
+
+        .import-border {
+            border-top: 4px solid #10b981;
+        }
+
+        .export-border {
+            border-top: 4px solid #3b82f6;
+        }
+
+        .consumption-border {
+            border-top: 4px solid #ef4444;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .tabs {
+                overflow-x: auto;
+                padding-bottom: 10px;
+            }
+
+            .tab {
+                min-width: 100px;
+                padding: 10px 15px;
+            }
+
+            .solar-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+
+      

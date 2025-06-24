@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report - People Counting</title> <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script> <style>
+        /* --- Global Styles & Layout (from Event_stop.html) --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #1e2433;
+            color: white;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* --- Sidebar Styles (from Event_stop.html) --- */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 200px;
+            height: 100vh;
+            overflow-y: auto; /* ให้เลื่อนได้เฉพาะภายใน sidebar เมื่อเนื้อหายาวเกินไป */
+            background-color: #1e2433;
+            border-right: 1px solid #2d3445;
+            z-index: 100;
+        }
+
+        .sidebar .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #1e2433;
+            border-bottom: 1px solid #2d3445;
+        }
+
+          
+        .sidebar .time {
+            font-size: 18px;
+            color: white;
+        }
+
+        .nav-menu {
+            padding: 10px 0;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            position: relative;
+            display: block;
+             text-decoration: none;
+             color: white;
+        }
+
+        .nav-item.active, .nav-item:hover {
+             background-color: #2d3445;
+        }
+
+         .nav-item a {
+             text-decoration: none;
+             color: inherit;
+             display: block;
+         }
+
+        .sub-menu {
+            padding-left: 20px;
+            display: none;
+            background-color: #1e2433;
+        }
+
+         .sub-menu.active-menu { /* Ensure submenu background matches */
+              background-color: #1e2433;
+          }
+
+
+        .sub-item {
+            padding: 10px 20px;
+            font-size: 13px;
+            cursor: pointer;
+            background-color: #1e2433;
+            display: block;
+            text-decoration: none;
+            color: #ffffff; /* Lighter text for sub-items */
+            position: relative; /* For potential link positioning */
+        }
+
+         .sub-item a { /* Ensure links inside sub-item fill it */
+              color: inherit;
+              text-decoration: none;
+              display: block;
+              /* padding: 10px 20px; Make link clickable area */
+              /* margin: -10px -20px; Adjust margin to cover padding */
+          }
+
+
+        .sub-item:hover {
+            background-color: #3c4357;
+             color: white;
+        }
+         .sub-item.active { /* Style for active sub-item */
+             background-color: #34495e; /* Use a distinct active color */
+             color: white;
+             font-weight: bold;
+         }
+
+
+        .sub-sub-menu {
+            padding-left: 20px;
+             background-color: #1e2433;
+        }
+         .sub-sub-menu .sub-item {
+              padding-left: 30px; /* Indent further */
+          }
+
+
+        /* Dropdown icons */
+        .dropdown-icon {
+            float: right;
+             margin-left: 5px;
+            transition: transform 0.3s;
+            font-size: 0.8em;
+        }
+
+        .active-menu {
+            display: block !important;
+        }
+
+         .nav-item.active .dropdown-icon, .sub-item.active .dropdown-icon {
+             transform: rotate(180deg);
+         }
+
+
+        /* --- Main Content Styles (from Event_stop.html) --- */
+        .main-content {
+            margin-left: 200px;
+
+            flex: 1;
+            background-color: #2d3445;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+
+        .main-content .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #1e2433;
+            border-bottom: 1px solid #2d3445;
+            flex-shrink: 0;
+        }
+
+        .search-bar { flex-grow: 1; margin: 0 20px; }
+        .search-input {
+            width: 100%;
+            max-width: 300px;
+            padding: 8px 15px 8px 40px;
+            border-radius: 25px;
+            border: none;
+            background-color: #2d3445;
+            color: white;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="gray" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>');
+            background-repeat: no-repeat;
+            background-position: 15px center;
+            outline: none;
+        }
+        .tools { display: flex; align-items: center; gap: 15px; color: #bdc3c7; }
+        .tool-icon{ cursor: pointer; }
+        .tool-icon:hover{ color: white; }
+        .time-filter { display: flex; align-items: center; background-color: #2d3445; padding: 6px 15px; border-radius: 5px; gap: 5px; cursor: pointer; }
+        .time-icon { color: gray; }
+        .language-selector { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+        .flag { width: 24px; height: 16px; display: inline-block; vertical-align: middle; }
+
+        /* --- New Styles for People Counting Report --- */
+        .content-wrapper {
+            padding: 20px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .report-section {
+            background-color: #1e2433; /* Darker panel background */
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .report-section h2 {
+            font-size: 1.4em;
+            margin-bottom: 20px;
+            color: #ecf0f1;
+            font-weight: 500;
+            border-bottom: 1px solid #2d3445;
+            padding-bottom: 10px;
+        }
+
+         /* Title styling for Camera section */
+         .camera-title-container {
+             display: flex;
+             justify-content: space-between;
+             align-items: center;
+             margin-bottom: 20px;
+             border-bottom: 1px solid #2d3445;
+             padding-bottom: 10px;
+         }
+          .camera-title-container h2 {
+              margin-bottom: 0; /* Remove default margin */
+              border-bottom: none; /* Remove default border */
+              padding-bottom: 0; /* Remove default padding */
+          }
+          .camera-filters span {
+              margin-left: 15px;
+              font-size: 0.9em;
+              color: #bdc3c7;
+          }
+           .camera-filters span.active-filter {
+               color: #3498db; /* Example active color */
+               font-weight: bold;
+           }
+
+        .summary-boxes {
+            display: grid;
+            /* grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); */
+             grid-template-columns: repeat(4, 1fr); /* Force 4 columns for top section */
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+         .summary-boxes.three-cols { /* Specific class for 3 columns */
+             grid-template-columns: repeat(3, 1fr);
+         }
+
+        .summary-box {
+            background-color: #2d3445;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: left; /* Align text left */
+        }
+
+        .summary-label {
+            font-size: 0.9em;
+            color: #bdc3c7;
+            margin-bottom: 5px;
+            display: block; /* Make label take full width */
+        }
+
+        .summary-value {
+            font-size: 1.8em; /* Larger value */
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 8px;
+            display: block;
+        }
+         .summary-value .unit {
+             font-size: 0.7em; /* Smaller unit */
+             font-weight: normal;
+             color: #bdc3c7;
+             margin-left: 3px;
+         }
+
+        .summary-indicator {
+            font-size: 0.8em;
+            color: #2dd4bf; /* Teal/Green color */
+        }
+         .summary-indicator .arrow {
+              /* Add arrow if needed, e.g., ▲ or ▼ */
+              margin-right: 3px;
+          }
+
+
+        .chart-container {
+            height: 280px; /* Adjust height as needed */
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .camera-label {
+             text-align: center;
+             margin-top: 15px;
+             font-size: 1.1em;
+             color: #bdc3c7;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1200px) {
+             .summary-boxes, .summary-boxes.three-cols {
+                 grid-template-columns: repeat(2, 1fr); /* 2 columns on medium screens */
+             }
+        }
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+            .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #2d3445; }
+            .main-content .header { flex-wrap: wrap; gap: 10px; }
+            .search-bar { margin: 0; }
+            .content-wrapper { padding: 10px; }
+            .report-section { padding: 15px; }
+            .summary-boxes, .summary-boxes.three-cols {
+                grid-template-columns: 1fr; /* 1 column on small screens */
+            }
+             .camera-title-container {
+                  flex-direction: column;
+                  align-items: flex-start;
+                  gap: 10px;
+              }
+        }
+
+         /* Style for links used as menu items */
+         .aaaa1 {
+             padding: 0; /* Remove padding if applied directly */
+             position: relative;
+             color: #ffffff;
+             cursor: pointer;
+             font-size: 14px;
+             transition: background-color 0.3s;
+             text-decoration: none;
+             display: block; /* Ensure link takes space */
+             /* Ensure padding is on parent .nav-item or .sub-item */
+         }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="header">
+                 <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAMESURBVHhe7ZxNbtswDIVPhK+eIukJmk4QOkHZCboOAnWCujdJOkncDugkVSeoM7Ahu4I/fYKASJEsy9t9EAh/NEBCiH98HgxGRAghxG8RxhgZY5w7fwdmPu3kMg/QNC0tLCzsQcQ81J9QRh2X02B/lx84t6m7p5aTnMz7S/dP77sMSt4nAo1Gw5dL909DkqSgXC6v7c9X44p73W73uGmaZs7K5fLCzWYzy0AgEGC5XL58Pq/nJ0uSyuVylmVZHv0zQghHjPERapqm87PZbAII8nypVIoY4wOBwIEQQtg1bY9pmo/U6XTs9fS877k8nFvKqhhja+MGxhgnIYTJsiwpy5L8sS5Lctb1fTTGCMHAzQ3m3hLjXAMjRkdp63neGGMul0vYd+vX5vOR373F+UqgVCpRhCAI8zBGIpEYhBBCkGU5jDGxLMtpmmZGfWGMcaPRqIQQ/B+MMRzHQQjyPBRFPBHFEEXxRywW6/5hHCKEcBwOsVKpZDab/V3Lsuj5+fOAr5a+8Dyf7Xa7Xq9n//3xYDCwzWbDx3/f849wONzxPS+VSm3z+YypVKrd4zh++4/iE6TZbP7bKpWK9/2q55g3qG/cK88c80Z8PkvjE+SWL5dL2BjjpFBK9/c0TbP/q4bxeDyVSgW+hBBm75yFLMumOI73+/0SCAQEQRAAUBQFURTz+XxeLBZfLpdzPB6PxeLhy4mJyVgslsfj8X+PbhAECIRQz/MYY5IkAaDIaDQqCIIYDAaUUkop3vt+v99dnmf+a5rWbDaT7fQ2h7Y7hBBxHL+aB+8NkqT3+z28v/d19X/f923nuz+VSq2/t9+0fL//7R/N/3L4zJmfn5+e/fF+v//T19+u76dSynk8HpRSUsq7ffvMhQsX/v89Hn//w4cPz+fzF6599/1p+5t62Gg0/P79++eff/6870+sP/76T7/wYDB41/V9KpHIWywW8/sB/CslJSX/D+j7R0qj4/C3AAAAAElFTkSuQmCC" alt="RST Logo" style="height: 30px; vertical-align: middle;">
+                 <!-- <div class="time">03:05 PM</div>  -->
+            </div>
+            <div class="nav-menu">
+                <div class="nav-item">Dashboard</div>
+                <div class="nav-item"><a href="{{ url_for('home') }}">Event</a></div>
+                <div class="nav-item">Overview</div>
+                <div class="nav-item "><a href="{{ url_for('device_control') }}" class="aaaa1">Device Control</a></div> 
+                <div class="nav-item " onclick="toggleMenu('report-menu')"> 
+                    Report <span class="dropdown-icon">▼</span>
+                </div>
+                
+                 <div class="sub-menu " id="report-menu"> 
+                    <!-- <div class="sub-item" onclick="toggleMenu('mdb-menu')">
+                         MDB <span class="dropdown-icon">▼</span>
+                     </div> -->
+                     <!-- <div class="sub-menu " id="mdb-menu">  -->
+                     <div class="sub-item"><a href="MDB.html" class="aaaa1">Solar & import</a></div>
+                     <!-- </div> -->
+                     <!-- <div class="sub-item"><a href="AC and Other.html" class="aaaa1">A/C & Other</a></div> -->
+                     <div class="sub-item" ><a href="{{ url_for('air_condition') }}" class="aaaa1">Air condition </a></div>
+                     <div class="sub-item"><a href="{{ url_for('power_meter') }}" class="aaaa1">Power meter </a></div>
+                     <div class="sub-item"><a href="{{ url_for('iaq') }}" class="aaaa1">IAQ Sensor</a></div>
+                     <div class="sub-item"><a href="" class="aaaa1">Camera</a></div>
+                    </div>
+                <div class="nav-item">Settings</div>
+                <div class="nav-item">Logout</div>
+            </div>
+        </div><div class="main-content">
+
+        <div class="header">
+                <div class="search-bar">
+                     <input type="text" class="search-input" placeholder="Search">
+                </div>
+                 <div class="tools">
+                     <div class="time-filter">
+                         <span class="time-icon">⏱</span>
+                         <span>Last 6 hours</span>
+                         <span>▼</span>
+                     </div>
+                     <!-- <div class="tool-icon">🔍</div>
+                     <div class="tool-icon">🔄</div>
+                     <div class="tool-icon">✓</div>
+                     <div class="tool-icon">^</div>
+                     <div class="language-selector">
+                          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAPCAMAAADJmq04AAAAQlBMVEUAVIcAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4fm09gPAAAAFXRSTlMAYGFfQJ+fr79/P39/v0CAv59/f6A+f5iWAAAAR0lEQVR42pWOWQ6AMAgDXeLu/4v3tBWHJO/+N+gYEEBqKj7+C1HkRJHlsbq/N6+g5LIGW9Kz9LpD6SU4qLh1z5k+wAMmQgJLv56KygAAAABJRU5ErkJggg==" alt="UK Flag" class="flag">
+                         <span>English</span>
+                         <span>▼</span>
+                     </div> -->
+                 </div>
+             </div><div class="content-wrapper">
+
+                <div class="report-section">
+                    <h2>People Counting</h2>
+                    <div class="summary-boxes">
+                        <div class="summary-box">
+                            <span class="summary-label">Total today</span>
+                            <span class="summary-value">last : 50</span>
+                            <span class="summary-indicator"><span class="arrow">▲</span> 5% Up from yesterday</span>
+                        </div>
+                        <div class="summary-box">
+                            <span class="summary-label">People in</span>
+                            <span class="summary-value">last : 50</span>
+                             <span class="summary-indicator"><span class="arrow">▲</span> 5% Up from yesterday</span>
+                        </div>
+                        <div class="summary-box">
+                            <span class="summary-label">People out</span>
+                            <span class="summary-value">last : 50</span>
+                             <span class="summary-indicator"><span class="arrow">▲</span> 5% Up from yesterday</span>
+                        </div>
+                         <div class="summary-box">
+                            <span class="summary-label">People Inside</span>
+                            <span class="summary-value">last : 50</span>
+                             <span class="summary-indicator"><span class="arrow">▲</span> 8% Up from yesterday</span>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="peopleCountingChart"></canvas>
+                    </div>
+                </div><div class="report-section">
+                     <div class="camera-title-container">
+                         <h2>Camera (people)</h2>
+                         <div class="camera-filters">
+                             <!-- <span class="active-filter">Total (today) &</span> -->
+                             <!-- <span>inside</span> -->
+                             </div>
+                     </div>
+                    <div class="summary-boxes three-cols"> <div class="summary-box">
+                            <span class="summary-label">Total in</span>
+                            <span class="summary-value">last : 100</span>
+                            </div>
+                        <div class="summary-box">
+                            <span class="summary-label">Total out</span>
+                            <span class="summary-value">last : 50</span>
+                             </div>
+                        <div class="summary-box">
+                            <span class="summary-label">Inside</span>
+                            <span class="summary-value">last : 50</span>
+                            </div>
+                        </div>
+                    <div class="chart-container">
+                        <canvas id="cameraChart"></canvas>
+                    </div>
+                    <div class="camera-label">Camera 01</div>
+                </div></div></div></div><script>
+       // --- Function to toggle menu display (from Event_stop.html) ---
+       function toggleMenu(menuId) {
+      const menu = document.getElementById(menuId);
+      if (menu) {
+        menu.classList.toggle('active-menu');
+      }
+    }
+
+        // --- Chart Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // Helper function to generate random chart data
+            function generateChartData(numDatasets = 3) {
+                const labels = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+                const datasets = [];
+                 // Define some base colors (adjust as needed)
+                 const colors = [
+                     { border: 'rgba(19, 12, 246, 1)', background: 'rgba(19, 2, 246, 0.2)' }, // Purple
+                     { border: 'rgba(2, 152, 219, 1)', background: 'rgba(2, 152, 219, 0.2)' }, // Blue
+                     { border: 'rgba(45, 211, 19, 1)', background: 'rgba(45, 211, 19, 0.2)' },  // Teal
+
+                     { border: 'rgba(45, 212, 191, 1)', background: 'rgba(45, 212, 191, 0.2)' }  // Teal
+                 ];
+
+                for (let i = 0; i < numDatasets; i++) {
+                     const data = labels.map(() => Math.floor(Math.random() * 1500) + 500); // Random data between 500-2000
+                     datasets.push({
+                         label: `Dataset ${i + 1}`,
+                         data: data,
+                         borderColor: colors[i % colors.length].border,
+                         backgroundColor: colors[i % colors.length].background,
+                         fill: true,
+                         tension: 0.4, // Smooth curves
+                         pointRadius: 0, // Hide points
+                         pointHoverRadius: 5,
+                         pointBackgroundColor: colors[i % colors.length].border,
+                     });
+                 }
+                 return { labels, datasets };
+            }
+
+             // Chart configuration options
+             const chartOptions = {
+                 responsive: true,
+                 maintainAspectRatio: false,
+                 scales: {
+                     y: {
+                         beginAtZero: true, // Start y-axis at 0
+                         max: 2500, // Set max based on image
+                         grid: {
+                             color: 'rgba(255, 255, 255, 0.1)' // Lighter grid lines
+                         },
+                         ticks: {
+                             color: 'rgba(255, 255, 255, 0.7)', // Light tick labels
+                             stepSize: 500 // Adjust step size
+                         }
+                     },
+                     x: {
+                         grid: {
+                             color: 'rgba(255, 255, 255, 0.1)'
+                         },
+                         ticks: {
+                             color: 'rgba(255, 255, 255, 0.7)'
+                         }
+                     }
+                 },
+                 plugins: {
+                     legend: {
+                         display: false // Hide legend like in the image
+                     },
+                     tooltip: {
+                         mode: 'index',
+                         intersect: false,
+                         backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                         titleColor: '#fff',
+                         bodyColor: '#fff',
+                     }
+                 },
+                 interaction: {
+                     mode: 'nearest',
+                     axis: 'x',
+                     intersect: false
+                 }
+             };
+
+
+            // Initialize People Counting Chart
+            const peopleCtx = document.getElementById('peopleCountingChart')?.getContext('2d');
+            if (peopleCtx) {
+                new Chart(peopleCtx, {
+                    type: 'line',
+                    data: generateChartData(4), // 3 datasets
+                    options: chartOptions
+                });
+            } else {
+                 console.error("Canvas element for People Counting Chart not found!");
+             }
+
+            // Initialize Camera Chart
+            const cameraCtx = document.getElementById('cameraChart')?.getContext('2d');
+             if (cameraCtx) {
+                 // Make y-axis slightly different if needed
+                 const cameraChartOptions = JSON.parse(JSON.stringify(chartOptions)); // Deep copy options
+                 // cameraChartOptions.scales.y.max = 2000; // Example adjustment if needed
+
+                new Chart(cameraCtx, {
+                    type: 'line',
+                    data: generateChartData(3), // 2 datasets
+                    options: cameraChartOptions
+                });
+             } else {
+                  console.error("Canvas element for Camera Chart not found!");
+              }
+
+        }); // End DOMContentLoaded
+
+    </script>
+</body>
+</html>

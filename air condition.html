@@ -1,0 +1,607 @@
+ 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Building Management Dashboard - Air Condition</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #1e2433;
+      color: white;
+    }
+
+    .container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: fixed;
+            top: 0;
+            left: 0;
+            width: 200px;
+            height: 100vh;
+            overflow-y: auto;  
+            background-color: #1e2433;
+            border-right: 1px solid #2d3445;
+            z-index: 100;
+    }
+
+    .main-content {
+      margin-left: 200px;
+      flex: 1;
+      background-color: #2d3445;
+      padding: 0;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      background-color: #1e2433;
+      border-bottom: 1px solid #2d3445;
+    }
+
+    .logo {
+      color: #3b82f6;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .time {
+      font-size: 18px;
+      color: white;
+    }
+
+    .search-bar {
+      flex-grow: 1;
+      margin: 0 20px;
+    }
+
+    .search-input {
+      width: 100%;
+      max-width: 300px;
+      padding: 8px 40px;
+      border-radius: 25px;
+      border: none;
+      background-color: #2d3445;
+      color: white;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="gray" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>');
+      background-repeat: no-repeat;
+      background-position: 15px center;
+    }
+
+    .tools {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .time-filter {
+      display: flex;
+      align-items: center;
+      background-color: #2d3445;
+      padding: 6px 15px;
+      border-radius: 5px;
+      gap: 5px;
+    }
+
+    .time-icon {
+      color: gray;
+    }
+
+    .language-selector {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .flag {
+      width: 24px;
+      height: 16px;
+    }
+
+    .nav-menu {
+      padding: 10px 0; /* Reduced padding */
+      flex-grow: 1; /* Allow menu to fill space */
+      overflow-y: auto; /* Add scroll if needed */
+    }
+
+    .nav-item {
+      padding: 12px 20px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+    }
+
+    .aaaa {
+      padding: 12px 20px;
+      position: relative;
+      right: 20px;
+      color: #ffffff;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+      text-decoration: none;
+    }
+
+    .aaaa1 {
+      padding: px 20px;
+      position: relative;
+      color: #ffffff;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+      text-decoration: none;
+    }
+
+    .nav-item:hover {
+      background-color: #2d3445;
+    }
+
+    .sub-menu {
+      padding-left: 20px;
+      display: none;
+    }
+
+    .sub-item {
+      padding: 10px 20px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .sub-item:hover {
+      background-color: #3c4357;
+    }
+
+    .sub-sub-menu {
+      padding-left: 20px;
+    }
+
+    .show {
+      display: block;
+    }
+
+    .page-title {
+      font-size: 20px;
+      margin: 20px;
+      color: white;
+      font-weight: 500;
+    }
+
+    /* Dashboard Panels */
+    .dashboard-content {
+      padding: 20px;
+    }
+
+    .panel {
+      background-color: #1e2433;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .panel-title {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #3b82f6;
+    }
+
+    .metrics-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .metric-box {
+      background-color: #2d3445;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+      transition: transform 0.3s;
+    }
+
+    .metric-box:hover {
+      transform: translateY(-3px);
+    }
+
+    .metric-label {
+      font-size: 14px;
+      color: #a0aec0;
+      margin-bottom: 5px;
+    }
+
+    .metric-value {
+      font-size: 34px;
+      font-weight: bold;
+    }
+
+    .metric-value .unit {
+      font-size: 22px;
+    }
+
+    .indicator {
+      height: 4px;
+      width: 80%;
+      margin: 10px auto 5px;
+      border-radius: 2px;
+    }
+
+    .red-indicator {
+      background-color: #ef4444;
+    }
+
+    .purple-indicator {
+      background-color: #8b5cf6;
+    }
+
+    .teal-indicator {
+      background-color: #2dd4bf;
+    }
+
+    .chart-container {
+      height: 200px;
+      position: relative;
+      margin-top: 20px;
+    }
+
+    .time-label {
+      text-align: center;
+      font-size: 14px;
+      color: #a0aec0;
+      margin-top: 5px;
+    }
+
+    /* Dropdown icons */
+    .dropdown-icon {
+      float: right; /* Position icon to the right */
+      margin-left: 5px;
+      transition: transform 0.3s;
+      font-size: 0.8em; /* Smaller icon */
+    }
+
+    .dropdown-icon1{
+      float: right; /* Position icon to the right */
+      margin-left: 5px;
+      transition: transform 0.3s;
+      font-size: 0.8em; /* Smaller icon */
+    }
+
+    .active-menu .dropdown-icon {
+      transform: rotate(180deg);
+    }
+
+
+    .active-menu {
+         display: block !important;
+    }   
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+      
+      .sidebar {
+        width: 100%;
+      }
+      
+      .metrics-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .aaaa3 {
+      padding: 12px 20px;
+      position: relative;
+      right: 20px;
+      color: #ffffff;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+      text-decoration: none;
+    }
+
+    
+  </style>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment/min/moment.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <div class="header">
+        <div class="logo">     </div>   <!--โลโก้อะไรก็ใส่เอา -->
+        <!-- <div class="time">06:15 PM</div> -->
+      </div>
+      <div class="nav-menu">
+        <div class="nav-item">Dashboard</div>
+        <div class="nav-item"><a href="{{ url_for('home') }}" class="aaaa3">Event</a></div>
+        <div class="nav-item">Overview</div>
+        <div class="nav-item "><a href="{{ url_for('device_control') }}" class="aaaa1">Device Control</a></div> 
+        <div class="nav-item" onclick="toggleMenu('report-menu')">
+          Report <span class="dropdown-icon">▼</span>
+        </div>
+        <div class="sub-menu " id="report-menu">
+          <!-- <div class="sub-item" onclick="toggleMenu('mdb-menu')">
+            MDB <span class="dropdown-icon1">▼</span>
+        </div> -->
+          <!-- <div class="sub-menu " id="mdb-menu"> -->
+            <div class="sub-item"><a href="{{ url_for('solar_import') }}" class="aaaa1">Solar & import</a></div>
+          <!-- </div> -->
+          <!-- <div class="sub-item"><a href="AC and Other.html" class="aaaa1">A/C & Other</a></div> -->
+          <div class="sub-item active">Air condition (%, *)</div>
+          <div class="sub-item"><a href="{{ url_for('power_meter') }}" class="aaaa1">Power meter </a></div>
+          <div class="sub-item"><a href="{{ url_for('iaq') }}" class="aaaa1">IAQ Sensor</a></div>
+          <div class="sub-item"><a href="{{ url_for('people_counting') }}" class="aaaa1">Camera</a></div>
+        </div>
+        <div class="nav-item">Settings</div>
+        <div class="nav-item">Logout</div>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="header">
+        <div class="search-bar">
+          <input type="text" class="search-input" placeholder="Search">
+        </div>
+        <div class="tools">
+          <div class="time-selection-area" style="display: flex; align-items: center; gap: 10px; margin-left: 20px;">
+          <select id="timeRangeSelect">
+              <option value="custom">Custom Range</option>
+              <option value="5m">Last 5 minutes</option>
+              <option value="15m">Last 15 minutes</option>
+              <option value="30m">Last 30 minutes</option>
+              <option value="1h">Last 1 hour</option>
+              <option value="3h">Last 3 hours</option>
+              <option value="6h" selected>Last 6 hours</option>
+              <option value="12h">Last 12 hours</option>
+              <option value="24h">Last 24 hours</option>
+              <option value="2d">Last 2 days</option>
+          </select>
+          <input type="text" id="startTimeInput" placeholder="From Date/Time" style="width: 160px; padding: 5px; border-radius: 4px;">
+          <input type="text" id="endTimeInput" placeholder="To Date/Time" style="width: 160px; padding: 5px; border-radius: 4px;">
+          <button id="applyTimeRange" style="padding: 6px 12px; border-radius: 4px; cursor: pointer;">Apply</button>
+      </div>
+          <div class="time-filter">
+            <span class="time-icon">⏱</span>
+            <span>Last 6 hours</span>
+            <span>▼</span>
+          </div>
+          <!-- <div class="tool-icon">🔍</div>
+          <div class="tool-icon">🔄</div>
+          <div class="tool-icon">✓</div>
+          <div class="tool-icon">^</div> -->
+          <!-- <div class="language-selector"> -->
+            <!-- <img src="/api/placeholder/24/16" alt="UK Flag" class="flag"> -->
+            <!-- <span>English</span> -->
+            <!-- <span>▼</span> -->
+          <!-- </div> -->
+        </div>
+      </div>
+
+      <div class="dashboard-content">
+        <h1 class="page-title">Average A/C Working %, Set Temp, Return Temp (Total)</h1>
+        
+        <!-- Total Stats Panel -->
+        <div class="panel">
+          <div class="metrics-container">
+            <div class="metric-box">
+              <div class="metric-label">Working</div>
+              <div class="indicator red-indicator"></div>
+              <div class="metric-value">40<span class="unit">%</span></div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Set_Temp</div>
+              <div class="indicator purple-indicator"></div>
+              <div class="metric-value">25<span class="unit">°</span></div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Return_Temp</div>
+              <div class="indicator teal-indicator"></div>
+              <div class="metric-value">26<span class="unit">°</span></div>
+            </div>
+          </div>
+          <div class="time-label">Last 6 hours</div>
+          <div class="chart-container">
+            <canvas id="totalChart"></canvas>
+          </div>
+        </div>
+        
+        <!-- AHU1 Panel -->
+        <div class="panel">
+          <h2 class="panel-title">AHU1</h2>
+          <div class="metrics-container">
+            <div class="metric-box">
+              <div class="metric-label">Working</div>
+              <div class="indicator red-indicator"></div>
+              <div class="metric-value">68<span class="unit">%</span></div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Set_Temp</div>
+              <div class="indicator purple-indicator"></div>
+              <div class="metric-value">27<span class="unit">°</span></div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Return_Temp</div>
+              <div class="indicator teal-indicator"></div>
+              <div class="metric-value">27<span class="unit">°</span></div>
+            </div>
+          </div>
+          <div class="time-label">Last 6 hours</div>
+          <div class="chart-container">
+            <canvas id="ahu1Chart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Function to toggle menu display
+    function toggleMenu(menuId) {
+      const menu = document.getElementById(menuId);
+      if (menu) {
+        menu.classList.toggle('active-menu');
+      }
+    }
+
+    // Generate random data for charts
+    function generateRandomData() {
+      const hours = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+      
+      // Generate three datasets with somewhat realistic patterns
+      const tempData = hours.map(() => Math.floor(Math.random() * 15) + 15); // Temperature between 15-30C
+      const workingData = hours.map(() => Math.floor(Math.random() * 50) + 25); // Working % between 25-75%
+      const returnTempData = hours.map(() => Math.floor(Math.random() * 15) + 15); // Return temp between 15-30C
+      
+      return {
+        labels: hours,
+        datasets: [
+          {
+            label: 'Working %',
+            data: workingData,
+            borderColor: '#ef4444',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            fill: true,
+            tension: 0.4,
+            // pointBackgroundColor: 'white',
+            // pointBorderColor: '#ef4444',
+            pointRadius: 0,
+            yAxisID: 'y'
+          },
+          {
+            label: 'Set Temp',
+            data: tempData,
+            borderColor: '#8b5cf6',
+            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+            fill: true,
+            tension: 0.4,
+            // pointBackgroundColor: 'white',
+            // pointBorderColor: '#8b5cf6',
+            pointRadius: 0,
+            yAxisID: 'y1'
+          },
+          {
+            label: 'Return Temp',
+            data: returnTempData,
+            borderColor: '#2dd4bf',
+            backgroundColor: 'rgba(45, 212, 191, 0.1)',
+            fill: true,
+            tension: 0.4,
+            // pointBackgroundColor: 'white',
+            // pointBorderColor: '#2dd4bf',
+            pointRadius: 0,
+             yAxisID: 'y1'
+          }
+        ]
+      };
+    }
+
+    // Chart configuration options
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+      type: 'linear',
+      display: true,
+      position: 'left',
+      beginAtZero: true,
+      max: 100,
+      grid: {
+        color: 'rgba(255, 255, 255, 0.1)'
+      },
+      ticks: {
+        color: 'rgba(255, 255, 255, 0.7)',
+        callback: function(value) {
+          return value + '%';  // เพิ่ม % ต่อท้ายค่า
+      }
+        }
+    },
+    y1: {
+      type: 'linear',
+      display: true,
+      position: 'left',
+      beginAtZero: true,   
+      max: 70, 
+      grid: {
+        drawOnChartArea: false 
+      },
+      ticks: {
+        color: 'rgba(255, 255, 255, 0.7)',
+        callback: function(value) {
+          return value + '°C'; 
+      }
+        
+      }
+    },
+    
+    x: {
+      grid: {
+        color: 'rgba(255, 255, 255, 0.1)'
+      },
+      ticks: {
+        color: 'rgba(255, 255, 255, 0.7)'
+      }
+    }
+  },
+  plugins: {
+    legend: {
+      display: true,
+      position: 'top',
+      labels: {
+        color: 'rgba(255, 255, 255, 0.7)'
+      }
+    },
+    tooltip: {
+      mode: 'index',
+      intersect: false
+    }
+  }
+};
+
+    // Initialize charts when page loads
+    window.onload = function() {
+      // Total chart
+      const totalCtx = document.getElementById('totalChart').getContext('2d');
+      const totalChart = new Chart(totalCtx, {
+        type: 'line',
+        data: generateRandomData(),
+        options: chartOptions
+      });
+      
+      function toggleMenu(menuId) {
+        const menu = document.getElementById(menuId);
+        if (menu) {
+            menu.classList.toggle('active-menu');
+        }
+        }
+
+
+      // AHU1 chart
+      const ahu1Ctx = document.getElementById('ahu1Chart').getContext('2d');
+      const ahu1Chart = new Chart(ahu1Ctx, {
+        type: 'line',
+        data: generateRandomData(),
+        options: chartOptions
+      });
+    };
+  </script>
+</body>
+</html>

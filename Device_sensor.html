@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        
+    </style>
+</head>
+<body>
+        <div class="container">
+            <h1>Modbus RTU RS485 Monitor</h1>
+            <div id="status" class="status disconnected">สถานะการเชื่อมต่อ: กำลังเชื่อมต่อ...</div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>แรงดันไฟฟ้า (V)</th>
+                        <th>กระแสไฟฟ้า (A)</th>
+                        <th>กำลังไฟฟ้า (kW)</th>
+                        <th>พลังงานไฟฟ้า (kWh)</th>
+                        <th>ตัวประกอบกำลัง (PF)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>IAQ01</td>
+                        <td id="temp">0.0</td>
+                        <td id="humi">0.0</td>
+                        <td id="co2">0.0</td>
+                        <td id="pm25">0.0</td>
+                        <td id="tvoc">0.0</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div id="timestamp" class="timestamp">อัปเดตล่าสุด: -</div>
+        </div>
+
+        <script>
+            // ฟังก์ชันสำหรับอัปเดตข้อมูลแบบเรียลไทม์
+            function updateData() {
+                fetch('/api/data')
+                    .then(response => response.json())
+                    .then(data => {
+                        // อัปเดตค่าต่างๆ ในตาราง
+                        document.getElementById('temp').textContent = data.voltage;
+                        document.getElementById('humi').textContent = data.current;
+                        document.getElementById('co2').textContent = data.power_kw;
+                        document.getElementById('pm25').textContent = data.energy_kwh;
+                        document.getElementById('tvoc').textContent = data.power_factor;
+                        
+                        // อัปเดตเวลา
+                        document.getElementById('timestamp').textContent = 'อัปเดตล่าสุด: ' + data.timestamp;
+                        
+                        // อัปเดตสถานะการเชื่อมต่อ
+                        const statusElement = document.getElementById('status');
+                        statusElement.textContent = 'สถานะการเชื่อมต่อ: ' + data.status;
+                        
+                        if (data.status === 'Connected') {
+                            statusElement.className = 'status connected';
+                        } else {
+                            statusElement.className = 'status disconnected';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching data:', error);
+                    });
+            }
+            
+            // อัปเดตข้อมูลทุก 1 วินาที
+            setInterval(updateData, 1000);
+            
+            // อัปเดตข้อมูลเมื่อโหลดหน้าเว็บ
+            updateData();
+        </script>
+</body>
+</html>

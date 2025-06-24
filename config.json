@@ -1,0 +1,29 @@
+{
+    "plc_ip": "192.168.0.2",
+    "ahus": {
+        "ahu_1": {
+            "m_addr": "8256",
+            "q_addr": "8192"
+        },
+        "ahu_2": {
+            "m_addr": "",
+            "q_addr": ""
+        },
+        "ahu_3": {
+            "m_addr": "",
+            "q_addr": ""
+        },
+        "ahu_4": {
+            "m_addr": "",
+            "q_addr": ""
+        },
+        "ahu_5": {
+            "m_addr": "",
+            "q_addr": ""
+        },
+        "ahu_6": {
+            "m_addr": "",
+            "q_addr": ""
+        }
+    }
+}

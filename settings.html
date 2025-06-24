@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Settings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* === Settings Page Styles === */
+
+        /* --- จัดสไตล์กล่องฟอร์มหลัก --- */
+        .settings-form {
+            background-color: #263140; /* ใช้สีพื้นหลังเดียวกับ sidebar และ card */
+            padding: 25px 30px; /* เพิ่มระยะห่างภายในให้มากขึ้น */
+            border-radius: 8px;
+            border: 1px solid #334155; /* เพิ่มเส้นขอบบางๆ */
+        }
+
+        /* --- หัวข้อหลักของหน้า --- */
+        .settings-form h2 {
+            margin-top: 0;
+            margin-bottom: 25px; /* เพิ่มระยะห่างใต้หัวข้อ */
+            color: var(--text-light);
+            font-weight: 500;
+            border-bottom: 1px solid #334155; /* เพิ่มเส้นคั่นใต้หัวข้อ */
+            padding-bottom: 15px;
+        }
+
+        /* --- ตาราง --- */
+        .settings-form table {
+            width: 100%;
+            border-collapse: collapse; /* ทำให้เส้นขอบตารางรวมเป็นเส้นเดียว */
+        }
+
+        .settings-form th,
+        .settings-form td {
+            padding: 16px; /* เพิ่มระยะห่างในเซลล์ตาราง */
+            text-align: left;
+            border-bottom: 1px solid #334155; /* เพิ่มเส้นคั่นระหว่างแถว */
+            vertical-align: middle; /* จัดให้เนื้อหาอยู่ตรงกลางแนวตั้ง */
+        }
+
+        .settings-form th {
+            color: var(--accent-blue); /* ใช้สีน้ำเงินสำหรับหัวตาราง */
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        /* --- ช่องกรอกข้อมูล (Input) --- */
+        .settings-form input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--bg-dark); /* สีพื้นหลังช่องกรอก */
+            border: 1px solid var(--bg-medium); /* สีขอบช่องกรอก */
+            color: var(--text-light); /* สีตัวอักษรเวลาพิมพ์ */
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+
+        /* สไตล์เมื่อผู้ใช้คลิกที่ช่องกรอกข้อมูล */
+        .settings-form input[type="number"]:focus {
+            outline: none; /* เอาขอบสีฟ้าๆ ของเบราว์เซอร์ออก */
+            border-color: var(--accent-blue); /* เปลี่ยนสีขอบเป็นสีน้ำเงิน */
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2); /* เพิ่มเงาเรืองแสง */
+        }
+
+        /* --- ปุ่มบันทึก --- */
+        .save-button {
+            background-color: var(--accent-green);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-top: 25px;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .save-button:hover {
+            background-color: #2ecc71; /* ทำให้สีสว่างขึ้นเมื่อเมาส์ชี้ */
+        }
+
+        /* --- กล่องคำอธิบาย --- */
+        .explanation {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #1e293b; /* ทำให้พื้นหลังดูมีมิติ */
+            border-left: 5px solid var(--accent-blue); /* เพิ่มแถบสีด้านซ้ายเพื่อเน้น */
+            border-radius: 5px;
+        }
+
+        .explanation h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: var(--accent-blue);
+        }
+
+        .explanation p {
+            margin: 0 0 10px 0;
+            line-height: 1.7;
+            color: var(--text-dark);
+        }
+
+        .sidebar {
+            width: 18.75%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="logo">RST</div>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Back</a></li>
+                    <li class="active"><a href="{{ url_for('settings') }}">Settings</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <header class="main-header">
+                <h2>Settings: AHU Modbus Addresses</h2>
+            </header>
+            <section class="settings-form">
+                <form action="{{ url_for('settings') }}" method="post">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>AHU Unit</th>
+                                <th>On Address (M-Flag)</th>
+                                <th>Off Address (M-Flag)</th>
+                                <th>Status Address (Q-Output)</th>
+                                <th>Stage ON Address (M-Flag)</th>
+                                <th>Stage OFF Address (M-Flag)</th>
+                                <th>Temp Setpoint Address (VW)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for setting in settings %}
+                            <tr>
+                                <td>AHU {{ '%02d'|format(setting['_id']) }}</td>
+                                <td>
+                                    <input type="number" name="on_address_m_{{ setting['_id'] }}" value="{{ setting.get('on_address_m', 0) }}">
+                                </td>
+                                <td>
+                                    <input type="number" name="off_address_m_{{ setting['_id'] }}" value="{{ setting.get('off_address_m', 0) }}">
+                                </td>
+                                <td>
+                                    <input type="number" name="output_address_q_{{ setting['_id'] }}" value="{{ setting.get('output_address_q', 0) }}">
+                                </td>
+                                <td>
+                                    <input type="number" name="scheduled_on_m_{{ setting['_id'] }}" value="{{ setting.get('scheduled_on_m', 0) }}">
+                                </td>
+                                <td>
+                                    <input type="number" name="scheduled_off_m_{{ setting['_id'] }}" value="{{ setting.get('scheduled_off_m', 0) }}">
+                                </td>
+                                <td>
+                                    <input type="number" name="temp_address_vw_{{ setting['_id'] }}" value="{{ setting.get('temp_address_vw', 0) }}">
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <button type="submit" class="save-button">Save Settings</button>
+                </form>
+                 <div class="explanation">
+                    <h3>คำอธิบายการตั้งค่า Address</h3>
+                    <p><strong>On/Off Address:</strong> ใส่ Modbus Address (Coil) ที่ตรงกับ M-Flag ใน LOGO! ที่ใช้รับคำสั่งเปิด/ปิดจากหน้า Device Control</p>
+                    <p><strong>Status Address:</strong> ใส่ Modbus Address (Coil) ที่ตรงกับ Output (Q) ของ PLC เพื่อใช้อ่านสถานะการทำงานจริง</p>
+                    <p><strong>Stage ON/OFF Address:</strong> ใส่ Modbus Address (Coil) ที่ตรงกับ M-Flag ที่ใช้รับคำสั่งจากระบบตั้งเวลา (Event)</p>
+                    <p><strong>Temp Setpoint Address:</strong> ใส่ Modbus Address (Holding Register) ที่ตรงกับ VW Address ใน LOGO! สำหรับรับค่าอุณหภูมิ</p>
+                </div>
+            </section>
+        </main>
+    </div>
+    </body>
+</html>

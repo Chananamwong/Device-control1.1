@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RST Control Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="logo">RST</div>
+            <nav>
+                <ul>
+                    <li>Dashboard</li>
+                    <li><a href="{{ url_for('schedule') }}">Event</a></li>
+                    <li>Overview</li>
+                    <li ><a href="{{ url_for('index') }}">Device Control</a></li>
+                    <li>Report</li>
+                    <li><a href="{{ url_for('settings') }}">Settings</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <header class="main-header">
+                <div class="tabs">
+                    <button class="tab-button active">A/C</button>
+                    <button class="tab-button">Power meter</button>
+                    </div>
+                <div id="time-display" class="time-display"></div>
+            </header>
+            <section class="ac-grid">
+                {% for i in range(1, 7) %}
+                <div class="ahu-card" id="ahu-{{ i }}">
+                    <div class="card-header">
+                        <h3>AHU {{ '%02d'|format(i) }}</h3>
+                        <div class="on-off-buttons">
+                            <button class="control-button btn-on" data-ahu-id="{{ i }}" data-action="on">ON</button>
+                            <button class="control-button btn-off" data-ahu-id="{{ i }}" data-action="off">OFF</button>
+                        </div>
+                        </div>
+                    <div class="card-body">
+                        <div class="temp-control">
+                            <button class="temp-btn temp-control-btn" data-ahu-id="{{ i }}" data-action="decrease">-</button>
+                            <div class="temp-display" id="temp-display-{{ i }}">28.0°C</div>
+                            <button class="temp-btn temp-control-btn" data-ahu-id="{{ i }}" data-action="increase">+</button>
+                        </div>
+                        <div class="mode-control">
+                            <div class="mode">
+                                <p>Cool</p>
+                                <div class="btn-group">
+                                    <button>Low</button><button class="active">Medium</button><button>High</button>
+                                </div>
+                            </div>
+                            <div class="mode">
+                                <p>Fan</p>
+                                <div class="btn-group">
+                                    <button>Low</button><button class="active">Medium</button><button>High</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <span>Alarm: ....</span>
+                        <span>Working: 40%</span>
+                        <span>Return_Temp: 28*</span>
+                        <span>location: cashier</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+        </main>
+    </div>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

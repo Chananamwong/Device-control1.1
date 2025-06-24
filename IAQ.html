@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IAQ Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        /* --- Global Styles & Layout (adapted from Event_start.html) --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #1e2433; /* Dark background like image */
+            color: white;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* --- Sidebar Styles (from Event_start.html) --- */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 200px;
+            height: 100vh;
+            overflow-y: auto; /* ให้เลื่อนได้เฉพาะภายใน sidebar เมื่อเนื้อหายาวเกินไป */
+            background-color: #1e2433;
+            border-right: 1px solid #2d3445;
+            z-index: 100;
+        }
+
+        .sidebar .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #1e2433;
+            border-bottom: 1px solid #2d3445;
+            flex-shrink: 0;
+        }
+
+         .sidebar .logo img { /* Style for logo image */
+            height: 30px;
+            vertical-align: middle;
+        }
+
+        .sidebar .time {
+            font-size: 18px;
+            color: white;
+        }
+
+        .nav-menu {
+            padding: 10px 0;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            position: relative;
+            display: block;
+             text-decoration: none;
+             color: white;
+        }
+
+        .nav-item.active, .nav-item:hover {
+             background-color: #2d3445;
+        }
+
+         .nav-item a {
+             text-decoration: none;
+             color: inherit;
+             display: block;
+         }
+
+        .sub-menu {
+            padding-left: 20px;
+            display: none;
+            background-color: #1e2433;
+        }
+
+        .sub-item {
+            padding: 10px 20px;
+            font-size: 13px;
+            cursor: pointer;
+            background-color: #1e2433;
+            display: block;
+            text-decoration: none;
+            color: #ffffff; /* Lighter color for sub-items */
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .sub-item:hover {
+            background-color: #3c4357;
+             color: white;
+        }
+         .sub-item.active {
+             background-color: #34495e;
+             color: white;
+             font-weight: bold;
+         }
+
+
+        .sub-sub-menu {
+            padding-left: 20px;
+             background-color: rgba(45, 52, 69, 0.5);
+        }
+
+        .dropdown-icon {
+            float: right;
+             margin-left: 5px;
+            transition: transform 0.3s;
+            font-size: 0.8em;
+        }
+
+        .active-menu {
+            display: block !important;
+        }
+
+         .nav-item.active-parent .dropdown-icon { /* Rotate icon when parent is active */
+             transform: rotate(180deg);
+         }
+
+        /* --- Main Content Styles (adapted from Event_start.html & image) --- */
+        .main-content {
+            flex: 1;
+            background-color: #2d3445; /* Main content background like image */
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            margin-left: 200px;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+
+        .main-content .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #1e2433; /* Match sidebar header */
+            border-bottom: 1px solid #2d3445;
+            flex-shrink: 0;
+        }
+
+        .search-bar {
+            flex-grow: 1;
+            margin: 0 20px;
+            max-width: 300px; /* Limit search bar width */
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 15px 8px 40px;
+            border-radius: 25px;
+            border: none;
+            background-color: #2d3445;
+            color: white;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="gray" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>');
+            background-repeat: no-repeat;
+            background-position: 15px center;
+            outline: none;
+        }
+        .search-input::placeholder {
+            color: #bdc3c7;
+        }
+
+        .tools {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #bdc3c7;
+        }
+         .tool-icon{
+             cursor: pointer;
+             font-size: 1.2em; /* Slightly larger icons */
+         }
+         .tool-icon:hover{
+             color: white;
+         }
+
+        .time-filter {
+            display: flex;
+            align-items: center;
+            background-color: #2d3445;
+            padding: 6px 15px;
+            border-radius: 5px;
+            gap: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .time-filter:hover {
+            background-color: #3c4357;
+        }
+
+        .time-icon {
+            color: gray;
+            font-size: 1.1em;
+        }
+
+        .language-selector {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+         .language-selector:hover {
+             color: white;
+         }
+
+        .flag {
+            width: 24px;
+            height: 16px;
+            display: inline-block;
+             vertical-align: middle;
+        }
+
+        /* --- Content Area for Graphs --- */
+         .content-wrapper {
+            padding: 20px;
+            flex-grow: 1;
+            overflow-y: auto; /* Allow scrolling if content overflows */
+         }
+
+        .graph-section {
+            background-color: #1e2433; /* Background for graph area */
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px; /* Space between graphs */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex; /* Use flexbox for positioning labels */
+            gap: 10px; /* Space between labels and chart */
+        }
+
+        .graph-section h2 {
+            /* Move Title inside the graph-section-main */
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: #4964ff;
+            border-bottom: 1px solid #2d3445;
+            padding-bottom: 10px;
+        }
+
+        /* NEW: Container for Y-Axis Labels */
+        .y-axis-labels {
+            display: flex;
+            flex-direction: column; /* Stack parameter names and values vertically */
+            justify-content: space-between; /* Distribute items vertically */
+            padding-top: 45px; /* Approximate alignment with top of chart area (adjust as needed) */
+            padding-bottom: 30px; /* Approximate alignment with bottom of chart area */
+            width: 250px; /* Adjust width as needed */
+            flex-shrink: 0; /* Prevent shrinking */
+            text-align: center;
+            font-size: 11px;
+            color: #aaa; /* Match image color */
+        }
+
+        .y-axis-labels .param-names,
+        .y-axis-labels .param-values {
+            display: flex;
+            justify-content: space-around; /* Distribute parameters horizontally */
+        }
+
+        .y-axis-labels .param-names span {
+            width: 50px; /* Fixed width for each parameter name */
+            height: 1px;
+            font-weight: bold;
+            color: #bdc3c7; /* Slightly brighter color for names */
+            font-size: 12px;
+        }
+
+        .y-axis-labels .param-values span {
+            width: 50px; /* Fixed width for each value */
+        }
+
+         /* NEW: Container for the actual chart */
+         .graph-section-main {
+             flex-grow: 1; /* Allow chart area to take remaining space */
+             display: flex;
+             flex-direction: column;
+         }
+
+
+        .chart-container {
+            position: relative;
+            height: 250px; /* Adjust height as needed */
+            width: 100%;
+            flex-grow: 1; /* Allow chart canvas container to fill space */
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 1200px) {
+             .search-bar { max-width: 250px; }
+             .y-axis-labels { width: 200px; font-size: 10px; }
+             .y-axis-labels .param-names span, .y-axis-labels .param-values span { width: 40px; }
+        }
+        @media (max-width: 992px) {
+            .tools { gap: 10px; }
+            .time-filter, .language-selector { font-size: 13px; padding: 5px 10px;}
+            .flag { width: 20px; height: 14px; }
+            .search-bar { max-width: 200px; margin: 0 10px; }
+            .main-content .header { padding: 10px 15px; }
+            /* Hide complex labels on smaller screens or stack them */
+             .graph-section { flex-direction: column; }
+             .y-axis-labels {
+                 flex-direction: row; /* Arrange parameter groups horizontally */
+                 justify-content: space-around;
+                 padding-top: 0;
+                 padding-bottom: 10px;
+                 width: 100%;
+                 order: 1; /* Show labels above chart */
+             }
+            .y-axis-labels .param-group { /* Group name and values together */
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+             .y-axis-labels .param-names, .y-axis-labels .param-values {
+                 flex-direction: column; /* Stack values under name */
+                 gap: 2px;
+            }
+             .graph-section-main { order: 2; } /* Chart below labels */
+
+        }
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid #2d3445; }
+            .nav-menu { max-height: 200px; /* Limit height when stacked */}
+            .main-content .header { flex-wrap: wrap; gap: 10px; justify-content: center; }
+            .search-bar { order: 1; width: 100%; max-width: none; margin: 5px 0; }
+            .tools { order: 2; justify-content: center; width: 100%;}
+            .content-wrapper { padding: 15px; }
+             .graph-section { padding: 10px; }
+             .chart-container { height: 200px; }
+             /* Further simplify labels if needed */
+             .y-axis-labels { flex-wrap: wrap; gap: 5px; } /* Allow wrapping */
+        }
+        @media (max-width: 480px) {
+            .sidebar .header { padding: 10px 15px; }
+            .nav-item { padding: 10px 15px; font-size: 13px;}
+            .sub-item { padding: 8px 15px; font-size: 12px;}
+            .tools { flex-wrap: wrap; } /* Allow tools to wrap */
+            .time-filter, .language-selector { flex-grow: 1; justify-content: center;} /* Make them take more space */
+            /* Hide labels completely on very small screens? */
+             .y-axis-labels { display: none; }
+             .graph-section-main { width: 100%; } /* Ensure chart takes full width */
+             /* Adjust chart padding if labels are hidden */
+             /* (Need to do this in JS options potentially) */
+        }
+
+
+        /* Helper class from Event_start.html for links inside nav items */
+        .aaaa1 {
+          padding: 0; /* Removed padding as nav-item handles it */
+          position: relative;
+          color: inherit; /* Inherit color from parent */
+          cursor: pointer;
+          font-size: inherit; /* Inherit font size */
+          text-decoration: none;
+          display: block; /* Make link fill the item */
+        }
+
+        #iaq02Chart{
+            position: relative;
+            top: 4px;
+        }
+
+        #iaq01Chart{
+            position: relative;
+            top: 4px;
+        }
+
+        .zzzz1{
+            position: relative;
+            right: 250px;
+            bottom: 5px;
+            
+        }
+        .y-axis-labels .param-names .a1{
+            color: #2b398b;
+        }
+        .y-axis-labels .param-names .a2{
+            color: #4fb9ff;
+        }
+
+        .y-axis-labels .param-names .a3{
+            color: #008323;
+        }
+
+        .y-axis-labels .param-names .a4{
+            color: #b3c20f;
+        }
+
+        .y-axis-labels .param-names .a5{
+            color: #e20f0f;
+        }
+
+        .dddd{
+            background-color: #008323;
+
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="header">
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAMESURBVHhe7ZxNbtswDIVPhK+eIukJmk4QOkHZCboOAnWCujdJOkncDugkVSeoM7Ahu4I/fYKASJEsy9t9EAh/NEBCiH98HgxGRAghxG8RxhgZY5w7fwdmPu3kMg/QNC0tLCzsQcQ81J9QRh2X02B/lx84t6m7p5aTnMz7S/dP77sMSt4nAo1Gw5dL909DkqSgXC6v7c9X44p73W73uGmaZs7K5fLCzWYzy0AgEGC5XL58Pq/nJ0uSyuVylmVZHv0zQghHjPERapqm87PZbAII8nypVIoY4wOBwIEQQtg1bY9pmo/U6XTs9fS877k8nFvKqhhja+MGxhgnIYTJsiwpy5L8sS5Lctb1fTTGCMHAzQ3m3hLjXAMjRkdp63neGGMul0vYd+vX5vOR373F+UqgVCpRhCAI8zBGIpEYhBBCkGU5jDGxLMtpmmZGfWGMcaPRqIQQ/B+MMRzHQQjyPBRFPBHFEEXxRywW6/5hHCKEcBwOsVKpZDab/V3Lsuj5+fOAr5a+8Dyf7Xa7Xq9n//3xYDCwzWbDx3/f849wONzxPS+VSm3z+YypVKrd4zh++4/iE6TZbP7bKpWK9/2q55g3qG/cK88c80Z8PkvjE+SWL5dL2BjjpFBK9/c0TbP/q4bxeDyVSgW+hBBm75yFLMumOI73+/0SCAQEQRAAUBQFURTz+XxeLBZfLpdzPB6PxeLhy4mJyVgslsfj8X+PbhAECIRQz/MYY5IkAaDIaDQqCIIYDAaUUkop3vt+v99dnmf+a5rWbDaT7fQ2h7Y7hBBxHL+aB+8NkqT3+z28v/d19X/f923nuz+VSq2/t9+0fL//7R/N/3L4zJmfn5+e/fF+v//T19+u76dSynk8HpRSUsq7ffvMhQsX/v89Hn//w4cPz+fzF6599/1p+5t62Gg0/P79++eff/6870+sP/76T7/wYDB41/V9KpHIWywW8/sB/CslJSX/D+j7R0qj4/C3AAAAAElFTkSuQmCC" alt="RST Logo" class="logo">
+                <!-- <div class="time">06:15 PM</div> -->
+           </div>
+           <div class="nav-menu">
+                <div class="nav-item">Dashboard</div>
+                <div class="nav-item"><a href="{{ url_for('home') }}">Event</a></div>
+                <div class="nav-item">Overview</div>
+                <div class="nav-item "><a href="{{ url_for('device_control') }}" class="aaaa1">Device Control</a></div> 
+                <div class="nav-item " onclick="toggleMenu('report-menu')"> 
+                   Report <span class="dropdown-icon">▼</span>
+               </div>
+
+                <div class="sub-menu" id="report-menu"> 
+                   <!-- <div class="sub-item" onclick="toggleMenu('mdb-menu')">
+                        MDB <span class="dropdown-icon">▼</span>
+                    </div> -->
+                    <!-- <div class="sub-menu " id="mdb-menu">  -->
+                        <div class="sub-item"><a href="{{ url_for('solar_import') }}" class="aaaa1">Solar & import</a></div>
+                        <div class="sub-item" ><a href="{{ url_for('air_condition') }}" class="aaaa1">Air condition </a></div>
+                        <div class="sub-item"><a href="{{ url_for('power_meter') }}" class="aaaa1">Power meter </a></div>
+                        <div class="sub-item"><a href="" class="aaaa1">IAQ Sensor</a></div>
+                        <div class="sub-item"><a href="{{ url_for('people_counting') }}" class="aaaa1">Camera</a></div>
+                 </div>
+                <div class="nav-item">Settings</div>
+                <div class="nav-item">Logout</div>
+            </div>
+       </div>
+
+        <div class="main-content">
+            <div class="header">
+                 <div class="search-bar">
+                     <input type="text" class="search-input" placeholder="Search">
+                 </div>
+                 <div class="tools">
+                     <div class="time-filter">
+                         <span class="time-icon">⏱</span>
+                         <span>Last 6 hours</span>
+                         <span>▼</span>
+                     </div>
+                     <!-- <div class="tool-icon">🔍</div>
+                     <div class="tool-icon">🔄</div>
+                     <div class="tool-icon">✓</div>
+                     <div class="tool-icon">^</div>
+                     <div class="language-selector">
+                          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAPCAMAAADJmq04AAAAQlBMVEUAVIcAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4cAV4fm09gPAAAAFXRSTlMAYGFfQJ+fr79/P39/v0CAv59/f6A+f5iWAAAAR0lEQVR42pWOWQ6AMAgDXeLu/4v3tBWHJO/+N+gYEEBqKj7+C1HkRJHlsbq/N6+g5LIGW9Kz9LpD6SU4qLh1z5k+wAMmQgJLv56KygAAAABJRU5ErkJggg==" alt="UK Flag" class="flag">
+                         <span>English</span>
+                         <span>▼</span>
+                     </div> -->
+                 </div>
+             </div>
+
+             <div class="content-wrapper">
+
+                <div class="graph-section">
+                    
+                    <div class="y-axis-labels">
+                         <div class="param-names">
+                            <span class="a1">Temp</span>
+                            <span class="a2">Humi</span>
+                            <span class="a3">Co2</span>
+                            <span class="a4">PM2.5</span>
+                            <span class="a5">TVOC</span>
+                         </div>
+                         <div class="param-values"> <span>100°C</span>
+                             <span>100RH</span>
+                             <span>400ppm</span>
+                             <span>40ug/m3</span>
+                             <span>4ug/m3</span>
+                         </div>
+                          <div class="param-values"> <span>80°C</span>
+                             <span>80RH</span>
+                             <span>320ppm</span>
+                             <span>32ug/m3</span>
+                             <span>3.2ug/m3</span>
+                         </div>
+                         <div class="param-values"> <span>60°C</span>
+                             <span>60RH</span>
+                             <span>240ppm</span>
+                             <span>24ug/m3</span>
+                             <span>2.4ug/m3</span>
+                         </div>
+                          <div class="param-values"> <span>40°C</span>
+                             <span>40RH</span>
+                             <span>160ppm</span>
+                             <span>16ug/m3</span>
+                             <span>1.6ug/m3</span>
+                         </div>
+                         <div class="param-values"> <span>20°C</span>
+                             <span>20RH</span>
+                             <span>80ppm</span>
+                             <span>8ug/m3</span>
+                             <span>0.8ug/m3</span>
+                         </div>
+                         <div class="param-values"> <span>0°C</span>
+                             <span>0RH</span>
+                             <span>0ppm</span>
+                             <span>0ug/m3</span>
+                             <span>0ug/m3</span>
+                         </div>
+                    </div>
+
+
+                    <div class="graph-section-main">
+                        <h2 class="zzzz1">IAQ 01</h2>
+                        <div class="chart-container">
+                            <canvas id="iaq01Chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="graph-section">
+                    <div class="y-axis-labels">
+                         <div class="param-names">
+                             <span class="a1">Temp</span>
+                             <span class="a2">Humi</span>
+                             <span class="a3">Co2</span>
+                             <span class="a4">PM2.5</span>
+                             <span class="a5">TVOC</span>
+                         </div>
+                         <div class="param-values">
+                             <span>100°C</span><span>100RH</span><span>400ppm</span><span>40ug/m3</span><span>4ug/m3</span>
+                         </div>
+                          <div class="param-values">
+                             <span>80°C</span><span>80RH</span><span>320ppm</span><span>32ug/m3</span><span>3.2ug/m3</span>
+                         </div>
+                         <div class="param-values">
+                             <span>60°C</span><span>60RH</span><span>240ppm</span><span>24ug/m3</span><span>2.4ug/m3</span>
+                         </div>
+                          <div class="param-values">
+                              <span>40°C</span><span>40RH</span><span>160ppm</span><span>16ug/m3</span><span>1.6ug/m3</span>
+                         </div>
+                         <div class="param-values">
+                             <span>20°C</span><span>20RH</span><span>80ppm</span><span>8ug/m3</span><span>0.8ug/m3</span>
+                         </div>
+                         <div class="param-values">
+                             <span>0°C</span><span>0RH</span><span>0ppm</span><span>0ug/m3</span><span>0ug/m3</span>
+                         </div>
+                     </div>
+                     <div class="graph-section-main">
+                        <h2 class="zzzz1">IAQ 02</h2>
+                        <div class="chart-container">
+                            <canvas id="iaq02Chart"></canvas>
+                        </div>
+                     </div>
+                </div>
+
+             </div> </div> </div> <script>
+       // --- Function to toggle menu display (from Event_start.html) ---
+       function toggleMenu(menuId) {
+                    const menu = document.getElementById(menuId);
+                    if (menu) {
+                        menu.classList.toggle('active-menu');
+                    }
+                }
+
+        // --- Chart Rendering ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const ctx01 = document.getElementById('iaq01Chart').getContext('2d');
+            const ctx02 = document.getElementById('iaq02Chart').getContext('2d');
+
+            // Helper function to create gradient (Unchanged)
+            function createGradient(ctx, colors) {
+                const chartArea = ctx.chart.chartArea;
+                if (!chartArea) { return colors[0] || 'rgba(0, 200, 0, 0.1)'; }
+                const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                gradient.addColorStop(0, colors[0]);
+                gradient.addColorStop(1, colors[1]);
+                return gradient;
+            }
+
+            // Shared Chart Configuration Options
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                // NEW: Add left padding to make space for HTML labels
+                layout: {
+                    padding: {
+                        left: 15, // Adjust this value as needed based on label width
+                        right: 20,
+                        top: 10,
+                        bottom: 5
+                    }
+                },
+                plugins: {
+                    legend: { display: false }, // Keep legend hidden
+                    tooltip: {
+                        mode: 'index', intersect: false, backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                        titleFont: { size: 14 }, bodyFont: { size: 12 }, padding: 10,
+                    }
+                },
+                scales: {
+                    x: { // X-axis config (Unchanged)
+                        labels: ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'],
+                        grid: { color: 'rgba(255, 255, 255, 0.1)', drawBorder: false, },
+                        ticks: { color: '#bdc3c7', font: { size: 11 } }
+                    },
+                    y: { // Y-axis config
+                         beginAtZero: true,
+                         max: 100,
+                        grid: { color: 'rgba(255, 255, 255, 0.1)', drawBorder: false, },
+                        ticks: {
+                            color: '#bdc3c7', // Y-axis tick label color
+                            font: { size: 11 },
+                            stepSize: 20, // Keep steps 0, 20, 40, 60, 80, 100
+                            // We keep the numeric labels on the axis itself
+                            // The HTML labels provide the context (Temp, Humi etc.)
+                             callback: function(value, index, values) {
+                                 return value; // Display the standard numeric ticks
+                             }
+                        }
+                    }
+                },
+                 elements: { // Line/Point config (Unchanged)
+                     point:{ radius: 0 },
+                     line: { tension: 0.4 }
+                 }
+            };
+
+            // --- Chart Data (Example Data - Unchanged) ---
+            const generateData = () => Array.from({length: 11}, () => Math.random() * 80 + 10);
+             const dataTemplate = {
+                 labels: commonOptions.scales.x.labels,
+                 datasets: [ // Dataset definitions remain the same
+                    { label: 'TVOC', data: generateData(), borderColor: 'rgba(0, 100, 200, 0.8)', backgroundColor: (context) => createGradient(context.chart.ctx, ['rgba(0, 80,200, 0.5)', 'rgba(0, 150, 200, 0.7)']), fill: 'origin',  order: 5 },
+                    { label: 'PM2.5', data: generateData().map(d => d + Math.random() * 5), borderColor: 'rgba(0, 200, 2000, 100)', backgroundColor: (context) => createGradient(context.chart.ctx, ['rgba(0, 100, 0, 0.5)', 'rgba(0, 180, 0, 0.7)']), fill: '-1',  order: 4 },
+                    { label: 'Co2', data: generateData().map(d => d + Math.random() * 10), borderColor: 'rgba(900, 200,100, 20)', backgroundColor: (context) => createGradient(context.chart.ctx, ['rgba(0, 130, 0, 0.5)', 'rgba(0, 210, 0, 0.7)']), fill: '-1',  order: 3 },
+                    { label: 'Humi', data: generateData().map(d => d + Math.random() * 15), borderColor: 'rgba(0, 190, 0, 0.8)', backgroundColor: (context) => createGradient(context.chart.ctx, ['rgba(0, 160, 0, 0.4)', 'rgba(0, 240, 0, 0.6)']), fill: '-1',  order: 2 },
+                    { label: 'Temp', data: generateData().map(d => d + Math.random() * 20), borderColor: 'rgba(900, 20, 0, 0.8)', backgroundColor: (context) => createGradient(context.chart.ctx, ['rgba(0, 190, 0, 0.3)', 'rgba(0, 255, 0, 0.5)']), fill: '-1',  order: 1 }
+                 ]
+             };
+
+            // Create Chart 1
+            new Chart(ctx01, {
+                type: 'line',
+                data: JSON.parse(JSON.stringify(dataTemplate)), // Deep clone data
+                options: commonOptions
+            });
+
+            // Create Chart 2
+            const data02 = JSON.parse(JSON.stringify(dataTemplate));
+            data02.datasets.forEach(ds => ds.data = generateData()); // Generate new data
+            new Chart(ctx02, {
+                type: 'line',
+                data: data02,
+                options: commonOptions
+            });
+
+            // --- Responsive Adjustments for Chart Padding ---
+            // Optional: Adjust padding dynamically if labels are hidden on small screens
+            const mediaQuerySmall = window.matchMedia('(max-width: 480px)');
+            function handleScreenChange(e) {
+                if (e.matches) {
+                    // Potentially update chart options to remove left padding
+                    // This requires accessing the chart instances, e.g.:
+                    // chart1Instance.options.layout.padding.left = 5;
+                    // chart1Instance.update();
+                    // console.log('Screen is small, reducing chart padding');
+                } else {
+                    // Restore original padding
+                    // chart1Instance.options.layout.padding.left = 15;
+                    // chart1Instance.update();
+                     // console.log('Screen is larger, restoring chart padding');
+                }
+            }
+            // mediaQuerySmall.addListener(handleScreenChange); // Deprecated
+             mediaQuerySmall.addEventListener('change', handleScreenChange);
+
+            // Initial check
+            handleScreenChange(mediaQuerySmall);
+
+        });
+    </script>
+</body>
+</html>
